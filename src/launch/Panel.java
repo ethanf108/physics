@@ -21,6 +21,7 @@ public class Panel extends JPanel implements MouseListener,MouseMotionListener{
         setPreferredSize(new Dimension(500,500));
         addMouseListener(this);
         addMouseMotionListener(this);
+autoUpdate();
     }
     @Override
     public void paint(Graphics g2){
@@ -32,11 +33,21 @@ public class Panel extends JPanel implements MouseListener,MouseMotionListener{
             g.fillRect(p.x, p.y, 10,10);
         }
     }
+
 void autoUpdate(){
     Thread autoUT = new Thread(new Runnable(){
         public void run(){
             while(true){
-                
+                for(Particle p : obs){
+                     p.timeAlive++;
+                     p.y-=(p.velocity/-10);
+                }
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+                repaint();
             }
         }
     });
@@ -45,7 +56,6 @@ void autoUpdate(){
     @Override
     public void mouseClicked(MouseEvent e) {
 obs.add(new Particle(e.getX(),e.getY()));
-repaint();
     }
 
     @Override
