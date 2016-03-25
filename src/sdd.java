@@ -1,13 +1,11 @@
 
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.ComponentOrientation;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -15,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -35,7 +34,7 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class sdd extends JFrame implements MouseListener, ChangeListener {
+public class sdd extends JFrame implements MouseListener, ChangeListener,ActionListener {
 
     /**
      * The serial version id
@@ -51,10 +50,9 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
      * The conversion factor from nano to base
      */
     public static final double NANO_TO_BASE = 1.0e9;
-
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
-        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), 1.0);
+        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue()/10.0);
         ObjectYo.addFixture(polyShape);
         ObjectYo.setMass(MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / 45.0, -((y - 350.0) / 45.0));
@@ -66,8 +64,15 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-
-        addRandOb(e.getX(), e.getY());
+        int x = e.getX();
+        int y = e.getY();
+for (Body b : this.world.getBodies()){
+    if(b.contains(new Vector2((x - 400.0) / 45.0, -((y - 350.0) / 45.0)))){
+        this.world.removeBody(b);
+        return;
+    }
+}
+        addRandOb(x, y);
 
     }
 
@@ -95,7 +100,20 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
             this.GravLabel.setText("Gravity: " + t.getValue() / 10.0);
         } else if (t.equals(Sides)) {
             this.SidesLabel.setText("Sides: " + t.getValue());
+        } else if (t.equals(Size)) {
+            this.SizeLabel.setText("Size: " + t.getValue()/10.0);
         }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+this.world.removeAllBodies();
+Rectangle floorRect = new Rectangle(15.0, 1.0);
+        GameObject floor = new GameObject();
+        floor.addFixture(new BodyFixture(floorRect));
+        floor.setMass(MassType.INFINITE);
+        floor.translate(0.0, -4.0);
+        this.world.addBody(floor);
     }
 
     public static class GameObject extends Body {
@@ -155,7 +173,9 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
     JLabel GravLabel = new JLabel("Gravity: 9.8");
     JSlider Sides = new JSlider(3, 25, 3);
     JLabel SidesLabel = new JLabel("Sides: 3");
-
+    JSlider Size = new JSlider(1, 50, 10);
+    JLabel SizeLabel = new JLabel("Size: 1.0");
+JButton deleteAll = new JButton("Delete all Objects");
     public sdd() {
         super("Physics project");
         this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
@@ -165,10 +185,15 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
         SettingsPane.add(grav);
         SettingsPane.add(SidesLabel);
         SettingsPane.add(Sides);
+        SettingsPane.add(SizeLabel);
+        SettingsPane.add(Size);
+        SettingsPane.add(deleteAll);
 
         this.add(SettingsPane);
         grav.addChangeListener(this);
         Sides.addChangeListener(this);
+        Size.addChangeListener(this);
+        deleteAll.addActionListener(this);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -330,6 +355,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener {
             // get the object
             GameObject go = (GameObject) this.world.getBody(i);
             // draw the object
+            if(this.world.getBodyCount()==0)break;
             go.render(g);
         }
     }
