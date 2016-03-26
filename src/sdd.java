@@ -34,6 +34,7 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
+
 public class sdd extends JFrame implements MouseListener, ChangeListener,ActionListener {
 
     /**
@@ -44,7 +45,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener,ActionL
     /**
      * The scale 45 pixels per meter
      */
-    public static final double SCALE = 45.0;
+    public static double SCALE = 45.0;
 
     /**
      * The conversion factor from nano to base
@@ -55,7 +56,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener,ActionL
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue()/10.0);
         ObjectYo.addFixture(polyShape);
         ObjectYo.setMass(MassType.NORMAL);
-        ObjectYo.translate((x - 400.0) / 45.0, -((y - 350.0) / 45.0));
+        ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
 
         ObjectYo.setAngularVelocity(Math.toRadians(-20.0));
         this.world.addBody(ObjectYo);
@@ -67,7 +68,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener,ActionL
         int x = e.getX();
         int y = e.getY();
 for (Body b : this.world.getBodies()){
-    if(b.contains(new Vector2((x - 400.0) / 45.0, -((y - 350.0) / 45.0)))){
+    if(b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))){
         this.world.removeBody(b);
         return;
     }
@@ -102,6 +103,9 @@ for (Body b : this.world.getBodies()){
             this.SidesLabel.setText("Sides: " + t.getValue());
         } else if (t.equals(Size)) {
             this.SizeLabel.setText("Size: " + t.getValue()/10.0);
+        } else if (t.equals(Scale)) {
+            this.ScaleLabel.setText("Scale: " + t.getValue());
+            this.SCALE=t.getValue();
         }
     }
 
@@ -175,6 +179,8 @@ Rectangle floorRect = new Rectangle(15.0, 1.0);
     JLabel SidesLabel = new JLabel("Sides: 3");
     JSlider Size = new JSlider(1, 50, 10);
     JLabel SizeLabel = new JLabel("Size: 1.0");
+    JSlider Scale = new JSlider(1, 45, 45);
+    JLabel ScaleLabel = new JLabel("Scale: 45");
 JButton deleteAll = new JButton("Delete all Objects");
     public sdd() {
         super("Physics project");
@@ -187,12 +193,15 @@ JButton deleteAll = new JButton("Delete all Objects");
         SettingsPane.add(Sides);
         SettingsPane.add(SizeLabel);
         SettingsPane.add(Size);
+        SettingsPane.add(ScaleLabel);
+        SettingsPane.add(Scale);
         SettingsPane.add(deleteAll);
 
         this.add(SettingsPane);
         grav.addChangeListener(this);
         Sides.addChangeListener(this);
         Size.addChangeListener(this);
+        Scale.addChangeListener(this);
         deleteAll.addActionListener(this);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -222,7 +231,6 @@ JButton deleteAll = new JButton("Delete all Objects");
         // make the JFrame not resizable
         // (this way I dont have to worry about resize events)
         this.setResizable(false);
-
         // size everything
         this.pack();
 
@@ -353,6 +361,10 @@ JButton deleteAll = new JButton("Delete all Objects");
         // draw all the objects in the world
         for (int i = 0; i < this.world.getBodyCount(); i++) {
             // get the object
+            if(this.world.getBody(i).getTransform().getTranslationY()<-7.0){
+                this.world.removeBody(this.world.getBody(i));
+                continue;
+            }
             GameObject go = (GameObject) this.world.getBody(i);
             // draw the object
             if(this.world.getBodyCount()==0)break;
