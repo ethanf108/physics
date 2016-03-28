@@ -143,6 +143,8 @@ Rectangle floorRect = new Rectangle(15.0, 1.0);
             for (BodyFixture fixture : this.fixtures) {
                 Convex convex = fixture.getShape();
                 Graphics2DRenderer.render(g, convex, SCALE, color);
+                g.rotate(-transform.getRotation());
+                g.drawString("hey", ((float)SCALE)/100.0f, ((float)SCALE)/100.0f);
 
             }
 
