@@ -3,17 +3,19 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -35,10 +37,9 @@ import org.dyn4j.geometry.Geometry;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
-import org.dyn4j.geometry.Transform;
 import org.dyn4j.geometry.Vector2;
 
-public class sdd extends JFrame implements MouseListener, ChangeListener, ActionListener {
+public class sdd extends JFrame implements MouseListener, ChangeListener, ActionListener, KeyEventDispatcher {
 //SETTINGS
 
     public static final byte VelocityDecimals = 2;
@@ -46,6 +47,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     public static double SCALE = 45.0;
 //USERVARS
     public static boolean isNextStaticObject = false;
+
+    public static boolean isPaused = false;
     /**
      * The conversion factor from nano to base
      */
@@ -54,11 +57,11 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue() / 10.0);
-        
-        ObjectYo.addFixture(polyShape).setFriction(Fric.getValue()/10.0);
+
+        ObjectYo.addFixture(polyShape).setFriction(Fric.getValue() / 10.0);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
-        ObjectYo.setAngularVelocity(Math.toRadians(-AngVel.getValue()));
+        ObjectYo.setAngularVelocity(Math.toRadians(-AngVel.getValue()*10.0));
         this.world.addBody(ObjectYo);
 
     }
@@ -100,8 +103,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         this.SidesLabel.setText("Sides: " + Sides.getValue());
         this.SizeLabel.setText("Size: " + Size.getValue() / 10.0);
         this.ScaleLabel.setText("Scale: " + Scale.getValue());
-        this.AngVelLabel.setText("Angular Velocity: " + AngVel.getValue());
-        this.FricLabel.setText("Friction: " + Fric.getValue()/10.0);
+        this.AngVelLabel.setText("Angular Velocity: " + AngVel.getValue()*10);
+        this.FricLabel.setText("Friction: " + Fric.getValue() / 10.0);
         SCALE = Scale.getValue();
 
     }
@@ -115,10 +118,36 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
             floor.addFixture(new BodyFixture(floorRect));
             floor.setMass(MassType.INFINITE);
             floor.translate(0.0, -4.0);
+            floor.color=Color.BLACK;
             this.world.addBody(floor);
         } else if (e.getSource().equals(isStatic)) {
             isNextStaticObject = isStatic.isSelected();
+        }else if (e.getSource().equals(close)) {
+            System.exit(0);
+        } else if (e.getSource().equals(pause)) {
+            isPaused = !isPaused;
+            if (isPaused) {
+                pause.setText("Play");
+            } else {
+                pause.setText("Pause");
+            }
         }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getID() == KeyEvent.KEY_RELEASED) {
+            if (e.getKeyChar() == ' ') {
+                isPaused = !isPaused;
+                if (isPaused) {
+                    pause.setText("Play");
+                } else {
+                    pause.setText("Pause");
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public static class GameObject extends Body {
@@ -147,16 +176,16 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
                 Graphics2DRenderer.render(g, convex, SCALE, color);
                 g.rotate(0 - transform.getRotation());
 
-                    g.setColor(Color.BLACK);
-                    AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
-                    g.transform(yFlip);
+                g.setColor(Color.BLACK);
+                AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
+                g.transform(yFlip);
                 if (this.mass.getType().equals(MassType.NORMAL)) {
-                    
+
                     g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
                     g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
 
                 }
-                g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, isNextStaticObject?2:11);
+                g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
             }
 
             g.setTransform(ot);
@@ -187,6 +216,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
      * Default constructor for the window
      */
     JButton deleteAll = new JButton("Delete all Objects");
+    JButton close = new JButton("Close");
+    JButton pause = new JButton("Pause");
     JCheckBox isStatic = new JCheckBox("Static Object?");
     JSlider grav = new JSlider(0, 1000, 98);
     JLabel GravLabel = new JLabel("Gravity: 9.8");
@@ -196,13 +227,16 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     JLabel SizeLabel = new JLabel("Size: 1.0");
     JSlider Scale = new JSlider(1, 45, 45);
     JLabel ScaleLabel = new JLabel("Scale: 45");
-    JSlider AngVel = new JSlider(-360, 360, 0);
+    JSlider AngVel = new JSlider(-36, 36, 0);
     JLabel AngVelLabel = new JLabel("Angular Velocity: 0");
     JSlider Fric = new JSlider(0, 40, 0);
-    JLabel FricLabel = new JLabel("Floor: 0");
+    JLabel FricLabel = new JLabel("Friction: 0.0");
 
     public sdd() {
         super("Physics Project");
+        setBackground(Color.MAGENTA);
+        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        manager.addKeyEventDispatcher(this);
         setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         JPanel SettingsPane = new JPanel();
         SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
@@ -259,11 +293,12 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         //buttons
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        buttonsPanel.add(close);
+        buttonsPanel.add(pause);
         buttonsPanel.add(deleteAll);
         buttonsPanel.add(isStatic);
         SettingsPane.add(buttonsPanel);
-
-        this.add(SettingsPane);
+        add(SettingsPane);
         grav.addChangeListener(this);
         AngVel.addChangeListener(this);
         Fric.addChangeListener(this);
@@ -272,6 +307,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         Scale.addChangeListener(this);
         deleteAll.addActionListener(this);
         isStatic.addActionListener(this);
+        pause.addActionListener(this);
+        close.addActionListener(this);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -287,21 +324,22 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
 
         // create the size of the window
         Dimension size = new Dimension(800, 600);
-
+        setUndecorated(true);
+        setSize(Toolkit.getDefaultToolkit().getScreenSize());
         // create a canvas to paint to 
         this.canvas = new Canvas();
         this.canvas.setPreferredSize(size);
         this.canvas.setMinimumSize(size);
         this.canvas.setMaximumSize(size);
-
-        // add the canvas to the JFrame
+        setBounds(0, 0, getToolkit().getScreenSize().width,
+                getToolkit().getScreenSize().height);        // add the canvas to the JFrame
         this.add(this.canvas);
 
         // make the JFrame not resizable
         // (this way I dont have to worry about resize events)
         this.setResizable(false);
         // size everything
-        this.pack();
+        // this.pack();
 
         // make sure we are not stopped
         this.stopped = false;
@@ -310,7 +348,6 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         initializeWorld();
 
         world.setGravity(new Vector2(0, -9.8));
-        this.pack();
     }
 
     /**
@@ -330,6 +367,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
         floor.translate(0.0, -4.0);
+        floor.color=Color.BLACK;
         this.world.addBody(floor);
 
     }
@@ -399,9 +437,6 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         // Sync the display on some systems.
         // (on Linux, this fixes event queue problems)
         Toolkit.getDefaultToolkit().sync();
-
-        // update the World
-        // get the current time
         long time = System.nanoTime();
         // get the elapsed time from the last iteration
         long diff = time - this.last;
@@ -409,8 +444,11 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         this.last = time;
         // convert from nanoseconds to seconds
         double elapsedTime = diff / NANO_TO_BASE;
-        // update the world with the elapsed time
-        this.world.update(elapsedTime / TimeSlow);
+        if (!isPaused) {
+
+            // update the world with the elapsed time
+            this.world.update(elapsedTime / TimeSlow);
+        }
     }
 
     /**
