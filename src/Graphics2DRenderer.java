@@ -2,10 +2,6 @@
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 
 import org.dyn4j.geometry.Capsule;
@@ -65,8 +61,6 @@ public final class Graphics2DRenderer {
 		// draw the outline
 		g.setColor(getOutlineColor(color));
 		g.draw(p);
-                //           g.setColor(Color.black);
-                //g.drawString("HI", 0.5f, 0.5f);
 
 	}
 

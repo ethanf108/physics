@@ -1,3 +1,4 @@
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,8 +12,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,20 +35,17 @@ import org.dyn4j.geometry.Geometry;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
+import org.dyn4j.geometry.Transform;
 import org.dyn4j.geometry.Vector2;
 
 public class sdd extends JFrame implements MouseListener, ChangeListener, ActionListener {
+//SETTINGS
 
-    /**
-     * The serial version id
-     */
-    private static final long serialVersionUID = 5663760293144882635L;
-
-    /**
-     * The scale 45 pixels per meter
-     */
+    public static final byte VelocityDecimals = 2;
+    public static final byte TimeSlow = 1;
     public static double SCALE = 45.0;
-
+//USERVARS
+    public static boolean isNextStaticObject = false;
     /**
      * The conversion factor from nano to base
      */
@@ -54,10 +55,9 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue() / 10.0);
         ObjectYo.addFixture(polyShape);
-        ObjectYo.setMass(MassType.NORMAL);
+        ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
-
-        ObjectYo.setAngularVelocity(Math.toRadians(-20.0));
+        ObjectYo.setAngularVelocity(Math.toRadians(-AngVel.getValue()));
         this.world.addBody(ObjectYo);
 
     }
@@ -94,29 +94,29 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
 
     @Override
     public void stateChanged(ChangeEvent e) {
-        JSlider t = (JSlider) e.getSource();
-        if (t.equals(grav)) {
-            this.world.setGravity(new Vector2(0, t.getValue() / -10.0));
-            this.GravLabel.setText("Gravity: " + t.getValue() / 10.0);
-        } else if (t.equals(Sides)) {
-            this.SidesLabel.setText("Sides: " + t.getValue());
-        } else if (t.equals(Size)) {
-            this.SizeLabel.setText("Size: " + t.getValue() / 10.0);
-        } else if (t.equals(Scale)) {
-            this.ScaleLabel.setText("Scale: " + t.getValue());
-            SCALE = t.getValue();
-        }
+        this.world.setGravity(new Vector2(0, grav.getValue() / -10.0));
+        this.GravLabel.setText("Gravity: " + grav.getValue() / 10.0);
+        this.SidesLabel.setText("Sides: " + Sides.getValue());
+        this.SizeLabel.setText("Size: " + Size.getValue() / 10.0);
+        this.ScaleLabel.setText("Scale: " + Scale.getValue());
+        this.AngVelLabel.setText("Angular Velocity: " + AngVel.getValue());
+        SCALE = Scale.getValue();
+
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        this.world.removeAllBodies();
-        Rectangle floorRect = new Rectangle(15.0, 1.0);
-        GameObject floor = new GameObject();
-        floor.addFixture(new BodyFixture(floorRect));
-        floor.setMass(MassType.INFINITE);
-        floor.translate(0.0, -4.0);
-        this.world.addBody(floor);
+        if (e.getSource().equals(this.deleteAll)) {
+            this.world.removeAllBodies();
+            Rectangle floorRect = new Rectangle(15.0, 1.0);
+            GameObject floor = new GameObject();
+            floor.addFixture(new BodyFixture(floorRect));
+            floor.setMass(MassType.INFINITE);
+            floor.translate(0.0, -4.0);
+            this.world.addBody(floor);
+        } else if (e.getSource().equals(isStatic)) {
+            isNextStaticObject = isStatic.isSelected();
+        }
     }
 
     public static class GameObject extends Body {
@@ -138,19 +138,23 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
             lt.rotate(this.transform.getRotation());
 
             g.transform(lt);
-            double i = 0;
+            final double dectemp = Math.pow(10.0, VelocityDecimals);
             for (BodyFixture fixture : this.fixtures) {
-                
+
                 Convex convex = fixture.getShape();
                 Graphics2DRenderer.render(g, convex, SCALE, color);
                 g.rotate(0 - transform.getRotation());
-                g.setColor(Color.BLACK);
-                AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
-                g.transform(yFlip);
-                g.drawString(Double.toString(Math.round(this.velocity.x*10.0)/10.0),-5, 1);
-                g.drawString(Double.toString(Math.round(this.velocity.y*10.0)/10.0),-5, 10);
-                i++;
 
+                    g.setColor(Color.BLACK);
+                    AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
+                    g.transform(yFlip);
+                if (this.mass.getType().equals(MassType.NORMAL)) {
+                    
+                    g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
+                    g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
+
+                }
+                g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, isNextStaticObject?2:11);
             }
 
             g.setTransform(ot);
@@ -180,6 +184,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     /**
      * Default constructor for the window
      */
+    JButton deleteAll = new JButton("Delete all Objects");
+    JCheckBox isStatic = new JCheckBox("Static Object?");
     JSlider grav = new JSlider(0, 1000, 98);
     JLabel GravLabel = new JLabel("Gravity: 9.8");
     JSlider Sides = new JSlider(3, 25, 3);
@@ -188,29 +194,71 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     JLabel SizeLabel = new JLabel("Size: 1.0");
     JSlider Scale = new JSlider(1, 45, 45);
     JLabel ScaleLabel = new JLabel("Scale: 45");
-    JButton deleteAll = new JButton("Delete all Objects");
+    JSlider AngVel = new JSlider(-360, 360, 0);
+    JLabel AngVelLabel = new JLabel("Angular Velocity: 0");
 
     public sdd() {
-        super("Physics project");
-        this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
+        super("Physics Project");
+        setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         JPanel SettingsPane = new JPanel();
         SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
-        SettingsPane.add(GravLabel);
-        SettingsPane.add(grav);
-        SettingsPane.add(SidesLabel);
-        SettingsPane.add(Sides);
-        SettingsPane.add(SizeLabel);
-        SettingsPane.add(Size);
-        SettingsPane.add(ScaleLabel);
-        SettingsPane.add(Scale);
-        SettingsPane.add(deleteAll);
+        //gravity
+        JPanel gravityPanel = new JPanel();
+        gravityPanel.setLayout(new BoxLayout(gravityPanel, BoxLayout.X_AXIS));
+
+        gravityPanel.add(GravLabel);
+        gravityPanel.add(grav);
+
+        SettingsPane.add(gravityPanel);
+        //sides
+        JPanel sidesPanel = new JPanel();
+        sidesPanel.setLayout(new BoxLayout(sidesPanel, BoxLayout.X_AXIS));
+
+        sidesPanel.add(SidesLabel);
+        sidesPanel.add(Sides);
+
+        SettingsPane.add(sidesPanel);
+
+        SettingsPane.add(gravityPanel);
+        //size
+        JPanel sizePanel = new JPanel();
+        sizePanel.setLayout(new BoxLayout(sizePanel, BoxLayout.X_AXIS));
+
+        sizePanel.add(SizeLabel);
+        sizePanel.add(Size);
+
+        SettingsPane.add(sizePanel);
+        //scale
+        JPanel scalePanel = new JPanel();
+        scalePanel.setLayout(new BoxLayout(scalePanel, BoxLayout.X_AXIS));
+
+        scalePanel.add(ScaleLabel);
+        scalePanel.add(Scale);
+
+        SettingsPane.add(scalePanel);
+        //AngVel
+        JPanel angVelPanel = new JPanel();
+        angVelPanel.setLayout(new BoxLayout(angVelPanel, BoxLayout.X_AXIS));
+
+        angVelPanel.add(AngVelLabel);
+        angVelPanel.add(AngVel);
+
+        SettingsPane.add(angVelPanel);
+        //buttons
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        buttonsPanel.add(deleteAll);
+        buttonsPanel.add(isStatic);
+        SettingsPane.add(buttonsPanel);
 
         this.add(SettingsPane);
         grav.addChangeListener(this);
+        AngVel.addChangeListener(this);
         Sides.addChangeListener(this);
         Size.addChangeListener(this);
         Scale.addChangeListener(this);
         deleteAll.addActionListener(this);
+        isStatic.addActionListener(this);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -295,9 +343,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
                 // render as fast as possible
                 while (!isStopped()) {
                     gameLoop();
-                    // you could add a Thread.yield(); or
-                    // Thread.sleep(long) here to give the
-                    // CPU some breathing room
+
                 }
             }
         };
@@ -351,7 +397,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         // convert from nanoseconds to seconds
         double elapsedTime = diff / NANO_TO_BASE;
         // update the world with the elapsed time
-        this.world.update(elapsedTime);
+        this.world.update(elapsedTime / TimeSlow);
     }
 
     /**
