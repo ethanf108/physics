@@ -1,4 +1,3 @@
-
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -34,8 +33,7 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-
-public class sdd extends JFrame implements MouseListener, ChangeListener,ActionListener {
+public class sdd extends JFrame implements MouseListener, ChangeListener, ActionListener {
 
     /**
      * The serial version id
@@ -51,28 +49,29 @@ public class sdd extends JFrame implements MouseListener, ChangeListener,ActionL
      * The conversion factor from nano to base
      */
     public static final double NANO_TO_BASE = 1.0e9;
+
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
-        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue()/10.0);
+        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue() / 10.0);
         ObjectYo.addFixture(polyShape);
         ObjectYo.setMass(MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
 
         ObjectYo.setAngularVelocity(Math.toRadians(-20.0));
         this.world.addBody(ObjectYo);
-        
+
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-for (Body b : this.world.getBodies()){
-    if(b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))){
-        this.world.removeBody(b);
-        return;
-    }
-}
+        for (Body b : this.world.getBodies()) {
+            if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
+                this.world.removeBody(b);
+                return;
+            }
+        }
         addRandOb(x, y);
 
     }
@@ -102,17 +101,17 @@ for (Body b : this.world.getBodies()){
         } else if (t.equals(Sides)) {
             this.SidesLabel.setText("Sides: " + t.getValue());
         } else if (t.equals(Size)) {
-            this.SizeLabel.setText("Size: " + t.getValue()/10.0);
+            this.SizeLabel.setText("Size: " + t.getValue() / 10.0);
         } else if (t.equals(Scale)) {
             this.ScaleLabel.setText("Scale: " + t.getValue());
-            this.SCALE=t.getValue();
+            SCALE = t.getValue();
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-this.world.removeAllBodies();
-Rectangle floorRect = new Rectangle(15.0, 1.0);
+        this.world.removeAllBodies();
+        Rectangle floorRect = new Rectangle(15.0, 1.0);
         GameObject floor = new GameObject();
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
@@ -139,12 +138,18 @@ Rectangle floorRect = new Rectangle(15.0, 1.0);
             lt.rotate(this.transform.getRotation());
 
             g.transform(lt);
-
+            double i = 0;
             for (BodyFixture fixture : this.fixtures) {
+                
                 Convex convex = fixture.getShape();
                 Graphics2DRenderer.render(g, convex, SCALE, color);
-                g.rotate(-transform.getRotation());
-                g.drawString("hey", ((float)SCALE)/100.0f, ((float)SCALE)/100.0f);
+                g.rotate(0 - transform.getRotation());
+                g.setColor(Color.BLACK);
+                AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
+                g.transform(yFlip);
+                g.drawString(Double.toString(Math.round(this.velocity.x*10.0)/10.0),-5, 1);
+                g.drawString(Double.toString(Math.round(this.velocity.y*10.0)/10.0),-5, 10);
+                i++;
 
             }
 
@@ -183,7 +188,8 @@ Rectangle floorRect = new Rectangle(15.0, 1.0);
     JLabel SizeLabel = new JLabel("Size: 1.0");
     JSlider Scale = new JSlider(1, 45, 45);
     JLabel ScaleLabel = new JLabel("Scale: 45");
-JButton deleteAll = new JButton("Delete all Objects");
+    JButton deleteAll = new JButton("Delete all Objects");
+
     public sdd() {
         super("Physics project");
         this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
@@ -240,7 +246,7 @@ JButton deleteAll = new JButton("Delete all Objects");
         this.stopped = false;
 
         // setup the world
-        this.initializeWorld();
+        initializeWorld();
 
         world.setGravity(new Vector2(0, -9.8));
         this.pack();
@@ -283,6 +289,7 @@ JButton deleteAll = new JButton("Delete all Objects");
         // run a separate thread to do active rendering
         // because we don't want to do it on the EDT
         Thread thread = new Thread() {
+            @Override
             public void run() {
                 // perform an infinite loop stopped
                 // render as fast as possible
@@ -363,13 +370,15 @@ JButton deleteAll = new JButton("Delete all Objects");
         // draw all the objects in the world
         for (int i = 0; i < this.world.getBodyCount(); i++) {
             // get the object
-            if(this.world.getBody(i).getTransform().getTranslationY()<-7.0){
+            if (this.world.getBody(i).getTransform().getTranslationY() < -7.0) {
                 this.world.removeBody(this.world.getBody(i));
                 continue;
             }
             GameObject go = (GameObject) this.world.getBody(i);
             // draw the object
-            if(this.world.getBodyCount()==0)break;
+            if (this.world.getBodyCount() == 0) {
+                break;
+            }
             go.render(g);
         }
     }
@@ -399,14 +408,7 @@ JButton deleteAll = new JButton("Delete all Objects");
         // set the look and feel to the system look and feel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
 
         // create the example JFrame
