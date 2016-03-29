@@ -54,7 +54,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue() / 10.0);
-        ObjectYo.addFixture(polyShape);
+        
+        ObjectYo.addFixture(polyShape).setFriction(Fric.getValue()/10.0);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(-AngVel.getValue()));
@@ -100,6 +101,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         this.SizeLabel.setText("Size: " + Size.getValue() / 10.0);
         this.ScaleLabel.setText("Scale: " + Scale.getValue());
         this.AngVelLabel.setText("Angular Velocity: " + AngVel.getValue());
+        this.FricLabel.setText("Friction: " + Fric.getValue()/10.0);
         SCALE = Scale.getValue();
 
     }
@@ -196,6 +198,8 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     JLabel ScaleLabel = new JLabel("Scale: 45");
     JSlider AngVel = new JSlider(-360, 360, 0);
     JLabel AngVelLabel = new JLabel("Angular Velocity: 0");
+    JSlider Fric = new JSlider(0, 40, 0);
+    JLabel FricLabel = new JLabel("Floor: 0");
 
     public sdd() {
         super("Physics Project");
@@ -244,6 +248,14 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         angVelPanel.add(AngVel);
 
         SettingsPane.add(angVelPanel);
+        //AngVel
+        JPanel fricPanel = new JPanel();
+        fricPanel.setLayout(new BoxLayout(fricPanel, BoxLayout.X_AXIS));
+
+        fricPanel.add(FricLabel);
+        fricPanel.add(Fric);
+
+        SettingsPane.add(fricPanel);
         //buttons
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
@@ -254,6 +266,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         this.add(SettingsPane);
         grav.addChangeListener(this);
         AngVel.addChangeListener(this);
+        Fric.addChangeListener(this);
         Sides.addChangeListener(this);
         Size.addChangeListener(this);
         Scale.addChangeListener(this);
