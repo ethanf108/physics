@@ -1,9 +1,7 @@
-
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
@@ -39,12 +37,17 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class sdd extends JFrame implements MouseListener, ChangeListener, ActionListener, KeyEventDispatcher {
+public class sdd extends JFrame implements MouseListener, ActionListener, KeyEventDispatcher {
 //SETTINGS
 
     public static final byte VelocityDecimals = 2;
     public static final byte TimeSlow = 1;
     public static double SCALE = 45.0;
+    public static byte Sides = 3;
+    public static double Size = 1.0;
+    public static double StartingAngVel = 0.0;
+    public static double FricTion = 0.0;
+    public static double AirRes = 0.00;
 //USERVARS
     public static boolean isNextStaticObject = false;
 
@@ -56,12 +59,13 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
 
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
-        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides.getValue(), Size.getValue() / 10.0);
+        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides, Size);
 
-        ObjectYo.addFixture(polyShape).setFriction(Fric.getValue() / 10.0);
+        ObjectYo.setLinearDamping(AirRes);
+        ObjectYo.addFixture(polyShape).setFriction(FricTion);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
-        ObjectYo.setAngularVelocity(Math.toRadians(-AngVel.getValue()*10.0));
+        ObjectYo.setAngularVelocity(Math.toRadians(-StartingAngVel * 10.0));
         this.world.addBody(ObjectYo);
 
     }
@@ -97,19 +101,6 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
-        this.world.setGravity(new Vector2(0, grav.getValue() / -10.0));
-        this.GravLabel.setText("Gravity: " + grav.getValue() / 10.0);
-        this.SidesLabel.setText("Sides: " + Sides.getValue());
-        this.SizeLabel.setText("Size: " + Size.getValue() / 10.0);
-        this.ScaleLabel.setText("Scale: " + Scale.getValue());
-        this.AngVelLabel.setText("Angular Velocity: " + AngVel.getValue()*10);
-        this.FricLabel.setText("Friction: " + Fric.getValue() / 10.0);
-        SCALE = Scale.getValue();
-
-    }
-
-    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(this.deleteAll)) {
             this.world.removeAllBodies();
@@ -118,11 +109,11 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
             floor.addFixture(new BodyFixture(floorRect));
             floor.setMass(MassType.INFINITE);
             floor.translate(0.0, -4.0);
-            floor.color=Color.BLACK;
+            floor.color = Color.BLACK;
             this.world.addBody(floor);
         } else if (e.getSource().equals(isStatic)) {
             isNextStaticObject = isStatic.isSelected();
-        }else if (e.getSource().equals(close)) {
+        } else if (e.getSource().equals(close)) {
             System.exit(0);
         } else if (e.getSource().equals(pause)) {
             isPaused = !isPaused;
@@ -154,11 +145,16 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
 
         protected Color color;
 
-        public GameObject() {
-            this.color = new Color(
+        public static Color colorGen() {
+            return new Color(
                     (float) Math.random() * 0.5f + 0.5f,
                     (float) Math.random() * 0.5f + 0.5f,
                     (float) Math.random() * 0.5f + 0.5f);
+
+        }
+
+        public GameObject() {
+            this.color = colorGen();
         }
 
         public void render(Graphics2D g) {
@@ -219,92 +215,92 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
     JButton close = new JButton("Close");
     JButton pause = new JButton("Pause");
     JCheckBox isStatic = new JCheckBox("Static Object?");
-    JSlider grav = new JSlider(0, 1000, 98);
-    JLabel GravLabel = new JLabel("Gravity: 9.8");
-    JSlider Sides = new JSlider(3, 25, 3);
-    JLabel SidesLabel = new JLabel("Sides: 3");
-    JSlider Size = new JSlider(1, 50, 10);
-    JLabel SizeLabel = new JLabel("Size: 1.0");
-    JSlider Scale = new JSlider(1, 45, 45);
-    JLabel ScaleLabel = new JLabel("Scale: 45");
-    JSlider AngVel = new JSlider(-36, 36, 0);
-    JLabel AngVelLabel = new JLabel("Angular Velocity: 0");
-    JSlider Fric = new JSlider(0, 40, 0);
-    JLabel FricLabel = new JLabel("Friction: 0.0");
+
+    public interface SliderImp {
+
+        public void run(JSlider slider);
+    }
+
+    public JPanel createLabelSliderPanel(JLabel l, JSlider s, String t, double div, boolean d) {
+        return createLabelSliderPanel(l, s, t, div, d, (JSlider slider) -> {
+        });
+    }
+
+    public JPanel createLabelSliderPanel(JLabel l, JSlider s, String t, double div, boolean d, SliderImp r) {
+        JPanel panel = new JPanel();
+        Color c = GameObject.colorGen();
+        panel.setBackground(c);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+        s.setBackground(c);
+        panel.add(l);
+        panel.add(s);
+        s.addChangeListener(new ChangeListener() {
+
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if (!d) {
+                    l.setText(t + (int) (s.getValue() / div));
+                } else {
+                    l.setText(t + s.getValue() / div);
+                }
+                r.run(s);
+
+            }
+        });
+        return panel;
+    }
 
     public sdd() {
         super("Physics Project");
-        setBackground(Color.MAGENTA);
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(this);
         setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         JPanel SettingsPane = new JPanel();
         SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
-        //gravity
-        JPanel gravityPanel = new JPanel();
-        gravityPanel.setLayout(new BoxLayout(gravityPanel, BoxLayout.X_AXIS));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Gravity: 9.8"), new JSlider(0, 1000, 98), "Gravity: ", 10, true,
+                (JSlider slider) -> {
+                    this.world.setGravity(new Vector2(0, slider.getValue() / -10.0));
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Sides: 3"), new JSlider(3, 25, 3), "Sides: ", 1, false,
+                (JSlider slider) -> {
+                    this.Sides = (byte) slider.getValue();
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Size: 1.0"), new JSlider(1, 50, 10), "Size: ", 10, true,
+                (JSlider slider) -> {
+                    this.Size = slider.getValue() / 10.0;
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Scale: 45"), new JSlider(1, 45, 45), "Scale: ", 1, false,
+                (JSlider slider) -> {
+                    this.SCALE = (byte) slider.getValue();
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Angular Velocity: 0"), new JSlider(-36, 36, 0), "Angular Velocity: ", 1.0 / 10.0, false,
+                (JSlider slider) -> {
+                    this.StartingAngVel = slider.getValue();
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Friction: 0.0"), new JSlider(0, 40, 0), "Friction: ", 10.0, true,
+                (JSlider slider) -> {
+                    this.FricTion = slider.getValue() / 10.0;
+                }));
+        SettingsPane.add(createLabelSliderPanel(new JLabel("Air Resistance: 0.00"), new JSlider(0, 100, 0), "Air Resistance: ", 100.0, true,
+                (JSlider slider) -> {
+                    this.AirRes = slider.getValue() / 100.0;
+                }));
 
-        gravityPanel.add(GravLabel);
-        gravityPanel.add(grav);
-
-        SettingsPane.add(gravityPanel);
-        //sides
-        JPanel sidesPanel = new JPanel();
-        sidesPanel.setLayout(new BoxLayout(sidesPanel, BoxLayout.X_AXIS));
-
-        sidesPanel.add(SidesLabel);
-        sidesPanel.add(Sides);
-
-        SettingsPane.add(sidesPanel);
-
-        SettingsPane.add(gravityPanel);
-        //size
-        JPanel sizePanel = new JPanel();
-        sizePanel.setLayout(new BoxLayout(sizePanel, BoxLayout.X_AXIS));
-
-        sizePanel.add(SizeLabel);
-        sizePanel.add(Size);
-
-        SettingsPane.add(sizePanel);
-        //scale
-        JPanel scalePanel = new JPanel();
-        scalePanel.setLayout(new BoxLayout(scalePanel, BoxLayout.X_AXIS));
-
-        scalePanel.add(ScaleLabel);
-        scalePanel.add(Scale);
-
-        SettingsPane.add(scalePanel);
-        //AngVel
-        JPanel angVelPanel = new JPanel();
-        angVelPanel.setLayout(new BoxLayout(angVelPanel, BoxLayout.X_AXIS));
-
-        angVelPanel.add(AngVelLabel);
-        angVelPanel.add(AngVel);
-
-        SettingsPane.add(angVelPanel);
-        //AngVel
-        JPanel fricPanel = new JPanel();
-        fricPanel.setLayout(new BoxLayout(fricPanel, BoxLayout.X_AXIS));
-
-        fricPanel.add(FricLabel);
-        fricPanel.add(Fric);
-
-        SettingsPane.add(fricPanel);
         //buttons
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        Color c = GameObject.colorGen();
+        close.setBackground(c);
+        pause.setBackground(c);
+        deleteAll.setBackground(c);
+        isStatic.setBackground(c);
         buttonsPanel.add(close);
         buttonsPanel.add(pause);
         buttonsPanel.add(deleteAll);
         buttonsPanel.add(isStatic);
         SettingsPane.add(buttonsPanel);
         add(SettingsPane);
-        grav.addChangeListener(this);
-        AngVel.addChangeListener(this);
-        Fric.addChangeListener(this);
-        Sides.addChangeListener(this);
-        Size.addChangeListener(this);
-        Scale.addChangeListener(this);
+
         deleteAll.addActionListener(this);
         isStatic.addActionListener(this);
         pause.addActionListener(this);
@@ -367,7 +363,7 @@ public class sdd extends JFrame implements MouseListener, ChangeListener, Action
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
         floor.translate(0.0, -4.0);
-        floor.color=Color.BLACK;
+        floor.color = Color.BLACK;
         this.world.addBody(floor);
 
     }
