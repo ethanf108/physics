@@ -1,6 +1,8 @@
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -14,6 +16,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
+import java.text.DecimalFormat;
+import java.util.Arrays;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -23,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -221,13 +226,9 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         public void run(JSlider slider);
     }
 
-    public JPanel createLabelSliderPanel(JLabel l, JSlider s, String t, double div, boolean d) {
-        return createLabelSliderPanel(l, s, t, div, d, (JSlider slider) -> {
-        });
-    }
-
-    public JPanel createLabelSliderPanel(JLabel l, JSlider s, String t, double div, boolean d, SliderImp r) {
+    public JPanel createLabelSliderPanel(double dv, JSlider s, String t, int div, int d, SliderImp r) {
         JPanel panel = new JPanel();
+        JLabel l = new JLabel();
         Color c = GameObject.colorGen();
         panel.setBackground(c);
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
@@ -238,15 +239,27 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                if (!d) {
-                    l.setText(t + (int) (s.getValue() / div));
-                } else {
-                    l.setText(t + s.getValue() / div);
+                if (div > 0) {
+
+                    char[] zeros = new char[div];
+                    Arrays.fill(zeros, '0');
+                    char[] zerosS = new char[d];
+                    Arrays.fill(zerosS, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    l.setText(t + result);
+                } else if (div <= 0) {
+                    char[] zeros = new char[(d)];
+                    Arrays.fill(zeros, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    l.setText(t + result);
                 }
-                r.run(s);
+                //r.run(s);
 
             }
         });
+        s.getChangeListeners()[0].stateChanged(new ChangeEvent(s));
         return panel;
     }
 
@@ -257,43 +270,43 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         JPanel SettingsPane = new JPanel();
         SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Gravity: 9.8"), new JSlider(0, 1000, 98), "Gravity: ", 10, true,
+        SettingsPane.add(createLabelSliderPanel(9.8, new JSlider(0, 1000, 98), "Gravity: ", 1, 3,
                 (JSlider slider) -> {
                     this.world.setGravity(new Vector2(0, slider.getValue() / -10.0));
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Sides: 3"), new JSlider(3, 25, 3), "Sides: ", 1, false,
+        SettingsPane.add(createLabelSliderPanel(3, new JSlider(3, 25, 3), "Sides: ", 0, 2,
                 (JSlider slider) -> {
                     this.Sides = (byte) slider.getValue();
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Size: 1.0"), new JSlider(1, 50, 10), "Size: ", 10, true,
+        SettingsPane.add(createLabelSliderPanel(1.0, new JSlider(1, 50, 10), "Size: ", 1, 1,
                 (JSlider slider) -> {
                     this.Size = slider.getValue() / 10.0;
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Scale: 45"), new JSlider(1, 45, 45), "Scale: ", 1, false,
+        SettingsPane.add(createLabelSliderPanel(45, new JSlider(1, 45, 45), "Scale: ", 0, 2,
                 (JSlider slider) -> {
                     this.SCALE = (byte) slider.getValue();
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Angular Velocity: 0"), new JSlider(-36, 36, 0), "Angular Velocity: ", 1.0 / 10.0, false,
+        SettingsPane.add(createLabelSliderPanel(0, new JSlider(-36, 36, 0), "Angular Velocity: ", -1, 3,
                 (JSlider slider) -> {
                     this.StartingAngVel = slider.getValue();
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Friction: 0.0"), new JSlider(0, 40, 0), "Friction: ", 10.0, true,
+        SettingsPane.add(createLabelSliderPanel(0, new JSlider(0, 40, 0), "Friction: ", 1, 1,
                 (JSlider slider) -> {
                     this.FricTion = slider.getValue() / 10.0;
                 }));
-        SettingsPane.add(createLabelSliderPanel(new JLabel("Air Resistance: 0.00"), new JSlider(0, 100, 0), "Air Resistance: ", 100.0, true,
+        SettingsPane.add(createLabelSliderPanel(0, new JSlider(0, 100, 0), "Air Resistance: ", 2, 0,
                 (JSlider slider) -> {
                     this.AirRes = slider.getValue() / 100.0;
                 }));
 
         //buttons
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
         Color c = GameObject.colorGen();
         close.setBackground(c);
         pause.setBackground(c);
         deleteAll.setBackground(c);
         isStatic.setBackground(c);
+        buttonsPanel.setBackground(c);
         buttonsPanel.add(close);
         buttonsPanel.add(pause);
         buttonsPanel.add(deleteAll);
@@ -500,7 +513,12 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
     public static void main(String[] args) {
         // set the look and feel to the system look and feel
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
 
