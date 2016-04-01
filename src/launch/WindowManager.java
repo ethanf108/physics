@@ -58,7 +58,7 @@ public class WindowManager extends JFrame implements MouseListener, KeyEventDisp
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides, Size);
 
-        ObjectYo.setUserData("FLOOR");
+        ObjectYo.setUserData("NOT FLOOR");
         ObjectYo.setLinearDamping(AirRes);
         ObjectYo.addFixture(polyShape).setFriction(FricTion);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
