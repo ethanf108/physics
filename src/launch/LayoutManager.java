@@ -1,6 +1,8 @@
 package launch;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -13,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.SliderUI;
+import javax.swing.plaf.basic.BasicSliderUI;
 import static launch.WindowManager.isNextStaticObject;
 import static launch.WindowManager.isPaused;
 import org.dyn4j.dynamics.BodyFixture;
@@ -22,6 +26,7 @@ import org.dyn4j.geometry.Vector2;
 
 public class LayoutManager implements ActionListener {
 
+    Font CurrentFont = null;
     WindowManager source;
     JButton deleteAll = new JButton("Delete all Objects");
     JButton close = new JButton("Close");
@@ -98,13 +103,17 @@ public class LayoutManager implements ActionListener {
         pause.setBackground(c);
         deleteAll.setBackground(c);
         isStatic.setBackground(c);
-        
+
         buttonsPanel.setBackground(c);
         buttonsPanel.add(close);
         buttonsPanel.add(pause);
         buttonsPanel.add(deleteAll);
         buttonsPanel.add(isStatic);
         SettingsPane.add(buttonsPanel);
+
+        for (Component comp : buttonsPanel.getComponents()) {
+            comp.setFont(CurrentFont);
+        }
 
         deleteAll.addActionListener(this);
         isStatic.addActionListener(this);
@@ -127,6 +136,12 @@ public class LayoutManager implements ActionListener {
         s.setBackground(c);
         panel.add(l);
         panel.add(s);
+        Font Manifesto;
+s.setForeground(Color.BLACK);
+BasicSliderUI sui =(BasicSliderUI) javax.swing.plaf.basic.BasicSliderUI.createUI(s);
+        
+        l.setFont(CurrentFont);
+
         s.addChangeListener(new ChangeListener() {
 
             @Override
@@ -139,8 +154,8 @@ public class LayoutManager implements ActionListener {
                     Arrays.fill(zerosS, '0');
                     DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
                     String result = formatter.format((s.getValue() / Math.pow(10, div)));
-                    if(result.charAt(0)=='.'){
-                        result="0"+result;
+                    if (result.charAt(0) == '.') {
+                        result = "0" + result;
                     }
                     l.setText(t + result);
                 } else if (div <= 0) {
@@ -160,5 +175,6 @@ public class LayoutManager implements ActionListener {
 
     public LayoutManager(WindowManager sourceWindow) {
         this.source = sourceWindow;
+        CurrentFont = new Font("verdana", 0, 15);
     }
 }
