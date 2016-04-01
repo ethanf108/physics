@@ -1,14 +1,13 @@
+package launch;
 
+import launch.Graphics2DRenderer;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -16,21 +15,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
-import java.text.DecimalFormat;
-import java.util.Arrays;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
@@ -42,7 +33,7 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class sdd extends JFrame implements MouseListener, ActionListener, KeyEventDispatcher {
+public class WindowManager extends JFrame implements MouseListener, KeyEventDispatcher {
 //SETTINGS
 
     public static final byte VelocityDecimals = 2;
@@ -53,6 +44,7 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
     public static double StartingAngVel = 0.0;
     public static double FricTion = 0.0;
     public static double AirRes = 0.00;
+    public LayoutManager customLayoutManager = null;
 //USERVARS
     public static boolean isNextStaticObject = false;
 
@@ -66,6 +58,7 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides, Size);
 
+        ObjectYo.setUserData("FLOOR");
         ObjectYo.setLinearDamping(AirRes);
         ObjectYo.addFixture(polyShape).setFriction(FricTion);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
@@ -106,39 +99,14 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(this.deleteAll)) {
-            this.world.removeAllBodies();
-            Rectangle floorRect = new Rectangle(15.0, 1.0);
-            GameObject floor = new GameObject();
-            floor.addFixture(new BodyFixture(floorRect));
-            floor.setMass(MassType.INFINITE);
-            floor.translate(0.0, -4.0);
-            floor.color = Color.BLACK;
-            this.world.addBody(floor);
-        } else if (e.getSource().equals(isStatic)) {
-            isNextStaticObject = isStatic.isSelected();
-        } else if (e.getSource().equals(close)) {
-            System.exit(0);
-        } else if (e.getSource().equals(pause)) {
-            isPaused = !isPaused;
-            if (isPaused) {
-                pause.setText("Play");
-            } else {
-                pause.setText("Pause");
-            }
-        }
-    }
-
-    @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getID() == KeyEvent.KEY_RELEASED) {
             if (e.getKeyChar() == ' ') {
                 isPaused = !isPaused;
                 if (isPaused) {
-                    pause.setText("Play");
+                    customLayoutManager.setPauseButtonText("Play");
                 } else {
-                    pause.setText("Pause");
+                    customLayoutManager.setPauseButtonText("Pause");
                 }
             }
             return true;
@@ -186,7 +154,9 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
                     g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
 
                 }
-                g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
+                if (!getUserData().equals("FLOOR")) {
+                    g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
+                }
             }
 
             g.setTransform(ot);
@@ -216,109 +186,14 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
     /**
      * Default constructor for the window
      */
-    JButton deleteAll = new JButton("Delete all Objects");
-    JButton close = new JButton("Close");
-    JButton pause = new JButton("Pause");
-    JCheckBox isStatic = new JCheckBox("Static Object?");
-
-    public interface SliderImp {
-
-        public void run(JSlider slider);
-    }
-
-    public JPanel createLabelSliderPanel(double dv, JSlider s, String t, int div, int d, SliderImp r) {
-        JPanel panel = new JPanel();
-        JLabel l = new JLabel();
-        Color c = GameObject.colorGen();
-        panel.setBackground(c);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-        s.setBackground(c);
-        panel.add(l);
-        panel.add(s);
-        s.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (div > 0) {
-
-                    char[] zeros = new char[div];
-                    Arrays.fill(zeros, '0');
-                    char[] zerosS = new char[d];
-                    Arrays.fill(zerosS, '0');
-                    DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
-                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
-                    l.setText(t + result);
-                } else if (div <= 0) {
-                    char[] zeros = new char[(d)];
-                    Arrays.fill(zeros, '0');
-                    DecimalFormat formatter = new DecimalFormat(new String(zeros));
-                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
-                    l.setText(t + result);
-                }
-                //r.run(s);
-
-            }
-        });
-        s.getChangeListeners()[0].stateChanged(new ChangeEvent(s));
-        return panel;
-    }
-
-    public sdd() {
+    public WindowManager() {
         super("Physics Project");
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(this);
-        setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
-        JPanel SettingsPane = new JPanel();
-        SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
-        SettingsPane.add(createLabelSliderPanel(9.8, new JSlider(0, 1000, 98), "Gravity: ", 1, 3,
-                (JSlider slider) -> {
-                    this.world.setGravity(new Vector2(0, slider.getValue() / -10.0));
-                }));
-        SettingsPane.add(createLabelSliderPanel(3, new JSlider(3, 25, 3), "Sides: ", 0, 2,
-                (JSlider slider) -> {
-                    this.Sides = (byte) slider.getValue();
-                }));
-        SettingsPane.add(createLabelSliderPanel(1.0, new JSlider(1, 50, 10), "Size: ", 1, 1,
-                (JSlider slider) -> {
-                    this.Size = slider.getValue() / 10.0;
-                }));
-        SettingsPane.add(createLabelSliderPanel(45, new JSlider(1, 45, 45), "Scale: ", 0, 2,
-                (JSlider slider) -> {
-                    this.SCALE = (byte) slider.getValue();
-                }));
-        SettingsPane.add(createLabelSliderPanel(0, new JSlider(-36, 36, 0), "Angular Velocity: ", -1, 3,
-                (JSlider slider) -> {
-                    this.StartingAngVel = slider.getValue();
-                }));
-        SettingsPane.add(createLabelSliderPanel(0, new JSlider(0, 40, 0), "Friction: ", 1, 1,
-                (JSlider slider) -> {
-                    this.FricTion = slider.getValue() / 10.0;
-                }));
-        SettingsPane.add(createLabelSliderPanel(0, new JSlider(0, 100, 0), "Air Resistance: ", 2, 0,
-                (JSlider slider) -> {
-                    this.AirRes = slider.getValue() / 100.0;
-                }));
-
-        //buttons
-        JPanel buttonsPanel = new JPanel();
-        Color c = GameObject.colorGen();
-        close.setBackground(c);
-        pause.setBackground(c);
-        deleteAll.setBackground(c);
-        isStatic.setBackground(c);
-        buttonsPanel.setBackground(c);
-        buttonsPanel.add(close);
-        buttonsPanel.add(pause);
-        buttonsPanel.add(deleteAll);
-        buttonsPanel.add(isStatic);
-        SettingsPane.add(buttonsPanel);
-        add(SettingsPane);
-
-        deleteAll.addActionListener(this);
-        isStatic.addActionListener(this);
-        pause.addActionListener(this);
-        close.addActionListener(this);
-
+        customLayoutManager = new LayoutManager(this);
+        JPanel before = new JPanel();
+        before.setLayout(new BoxLayout(before, BoxLayout.Y_AXIS));
+        add(before);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // add a window listener
@@ -349,14 +224,14 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         this.setResizable(false);
         // size everything
         // this.pack();
-
+        initializeWorld();
         // make sure we are not stopped
         this.stopped = false;
 
         // setup the world
-        initializeWorld();
-
         world.setGravity(new Vector2(0, -9.8));
+        before.add(customLayoutManager.layoutSettings());
+
     }
 
     /**
@@ -373,10 +248,10 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         // create the floor
         Rectangle floorRect = new Rectangle(15.0, 1.0);
         GameObject floor = new GameObject();
+        floor.setUserData("FLOOR");
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
         floor.translate(0.0, -4.0);
-        floor.color = Color.BLACK;
         this.world.addBody(floor);
 
     }
@@ -523,7 +398,7 @@ public class sdd extends JFrame implements MouseListener, ActionListener, KeyEve
         }
 
         // create the example JFrame
-        sdd window = new sdd();
+        WindowManager window = new WindowManager();
 
         // show it
         window.setVisible(true);
