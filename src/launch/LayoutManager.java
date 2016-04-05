@@ -14,8 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.plaf.SliderUI;
 import javax.swing.plaf.basic.BasicSliderUI;
 import static launch.WindowManager.isNextStaticObject;
 import static launch.WindowManager.isPaused;
@@ -31,6 +29,7 @@ public class LayoutManager implements ActionListener {
     JButton deleteAll = new JButton("Delete all Objects");
     JButton close = new JButton("Close");
     JButton pause = new JButton("Pause");
+    public static JButton settingsPhys = new JButton("Settings");
     JCheckBox isStatic = new JCheckBox("Static Object?");
 
     @Override
@@ -55,6 +54,8 @@ public class LayoutManager implements ActionListener {
             } else {
                 pause.setText("Pause");
             }
+        }else if(e.getSource().equals(settingsPhys)){
+            isPaused = true;
         }
     }
 
@@ -64,7 +65,7 @@ public class LayoutManager implements ActionListener {
     }
 
     public JPanel layoutSettings() {
-        source.setLayout(new BoxLayout(source.getContentPane(), BoxLayout.Y_AXIS));
+        source.setLayout(new BoxLayout(source, BoxLayout.Y_AXIS));
         JPanel SettingsPane = new JPanel();
         SettingsPane.setLayout(new BoxLayout(SettingsPane, BoxLayout.Y_AXIS));
         SettingsPane.add(createLabelSliderPanel(9.8, new JSlider(0, 1000, 98), "Gravity: ", 1, 3,
@@ -81,7 +82,7 @@ public class LayoutManager implements ActionListener {
                 }));
         SettingsPane.add(createLabelSliderPanel(45, new JSlider(1, 45, 45), "Scale: ", 0, 2,
                 (JSlider slider) -> {
-                    source.SCALE = (byte) slider.getValue();
+                    WindowManager.SCALE = (byte) slider.getValue();
                 }));
         SettingsPane.add(createLabelSliderPanel(0, new JSlider(-36, 36, 0), "Angular Velocity: ", -1, 3,
                 (JSlider slider) -> {
@@ -109,12 +110,13 @@ public class LayoutManager implements ActionListener {
         buttonsPanel.add(pause);
         buttonsPanel.add(deleteAll);
         buttonsPanel.add(isStatic);
+        buttonsPanel.add(settingsPhys);
         SettingsPane.add(buttonsPanel);
 
         for (Component comp : buttonsPanel.getComponents()) {
             comp.setFont(CurrentFont);
         }
-
+        settingsPhys.addActionListener(MainWindow.MAIN);
         deleteAll.addActionListener(this);
         isStatic.addActionListener(this);
         pause.addActionListener(this);
@@ -137,37 +139,32 @@ public class LayoutManager implements ActionListener {
         panel.add(l);
         panel.add(s);
         Font Manifesto;
-s.setForeground(Color.BLACK);
-BasicSliderUI sui =(BasicSliderUI) javax.swing.plaf.basic.BasicSliderUI.createUI(s);
-        
+        s.setForeground(Color.BLACK);
+        BasicSliderUI sui = (BasicSliderUI) javax.swing.plaf.basic.BasicSliderUI.createUI(s);
+
         l.setFont(CurrentFont);
 
-        s.addChangeListener(new ChangeListener() {
+        s.addChangeListener((ChangeEvent e) -> {
+            if (div > 0) {
 
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (div > 0) {
-
-                    char[] zeros = new char[div];
-                    Arrays.fill(zeros, '0');
-                    char[] zerosS = new char[d];
-                    Arrays.fill(zerosS, '0');
-                    DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
-                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
-                    if (result.charAt(0) == '.') {
-                        result = "0" + result;
-                    }
-                    l.setText(t + result);
-                } else if (div <= 0) {
-                    char[] zeros = new char[(d)];
-                    Arrays.fill(zeros, '0');
-                    DecimalFormat formatter = new DecimalFormat(new String(zeros));
-                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
-                    l.setText(t + result);
+                char[] zeros = new char[div];
+                Arrays.fill(zeros, '0');
+                char[] zerosS = new char[d];
+                Arrays.fill(zerosS, '0');
+                DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
+                String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                if (result.charAt(0) == '.') {
+                    result = "0" + result;
                 }
-                r.run(s);
-
+                l.setText(t + result);
+            } else if (div <= 0) {
+                char[] zeros = new char[(d)];
+                Arrays.fill(zeros, '0');
+                DecimalFormat formatter = new DecimalFormat(new String(zeros));
+                String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                l.setText(t + result);
             }
+            r.run(s);
         });
         s.getChangeListeners()[0].stateChanged(null);
         return panel;

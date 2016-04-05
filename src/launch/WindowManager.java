@@ -1,6 +1,5 @@
 package launch;
 
-import launch.Graphics2DRenderer;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -33,17 +32,17 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class WindowManager extends JFrame implements MouseListener, KeyEventDispatcher {
+public class WindowManager extends JPanel implements MouseListener, KeyEventDispatcher {
 //SETTINGS
 
     public static final byte VelocityDecimals = 2;
-    public static final byte TimeSlow = 1;
+    public final byte TimeSlow = 1;
     public static double SCALE = 45.0;
-    public static byte Sides = 3;
-    public static double Size = 1.0;
-    public static double StartingAngVel = 0.0;
-    public static double FricTion = 0.0;
-    public static double AirRes = 0.00;
+    public byte Sides = 3;
+    public double Size = 1.0;
+    public double StartingAngVel = 0.0;
+    public double FricTion = 0.0;
+    public double AirRes = 0.00;
     public LayoutManager customLayoutManager = null;
 //USERVARS
     public static boolean isNextStaticObject = false;
@@ -187,41 +186,32 @@ public class WindowManager extends JFrame implements MouseListener, KeyEventDisp
      * Default constructor for the window
      */
     public WindowManager() {
-        super("Physics Project");
+        super();
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(this);
         customLayoutManager = new LayoutManager(this);
         JPanel before = new JPanel();
         before.setLayout(new BoxLayout(before, BoxLayout.Y_AXIS));
         add(before);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // add a window listener
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                // before we stop the JVM stop the example
-                stop();
-                super.windowClosing(e);
-            }
-        });
+        
 
         // create the size of the window
         Dimension size = new Dimension(800, 600);
-        setUndecorated(true);
         setSize(Toolkit.getDefaultToolkit().getScreenSize());
         // create a canvas to paint to 
         this.canvas = new Canvas();
         this.canvas.setPreferredSize(size);
         this.canvas.setMinimumSize(size);
         this.canvas.setMaximumSize(size);
+
         setBounds(0, 0, getToolkit().getScreenSize().width,
                 getToolkit().getScreenSize().height);        // add the canvas to the JFrame
         this.add(this.canvas);
 
         // make the JFrame not resizable
         // (this way I dont have to worry about resize events)
-        this.setResizable(false);
         // size everything
         // this.pack();
         initializeWorld();
@@ -231,7 +221,6 @@ public class WindowManager extends JFrame implements MouseListener, KeyEventDisp
         // setup the world
         world.setGravity(new Vector2(0, -9.8));
         before.add(customLayoutManager.layoutSettings());
-
     }
 
     /**
@@ -239,7 +228,7 @@ public class WindowManager extends JFrame implements MouseListener, KeyEventDisp
      * <p>
      * Basically the same shapes from the Shapes test in the TestBed.
      */
-    protected void initializeWorld() {
+    protected final void initializeWorld() {
         // create the world
         this.world = new World();
         this.canvas.addMouseListener(this);
@@ -364,46 +353,13 @@ public class WindowManager extends JFrame implements MouseListener, KeyEventDisp
         }
     }
 
-    /**
-     * Stops the example.
-     */
     public synchronized void stop() {
         this.stopped = true;
     }
 
-    /**
-     * Returns true if the example is stopped.
-     *
-     * @return boolean true if stopped
-     */
     public synchronized boolean isStopped() {
         return this.stopped;
     }
 
-    /**
-     * Entry point for the example application.
-     *
-     * @param args command line arguments
-     */
-    public static void main(String[] args) {
-        // set the look and feel to the system look and feel
-        try {
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-        }
-
-        // create the example JFrame
-        WindowManager window = new WindowManager();
-
-        // show it
-        window.setVisible(true);
-
-        // start it
-        window.start();
-    }
+   
 }
