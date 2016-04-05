@@ -29,7 +29,9 @@ public class MainWindow extends JFrame implements ActionListener {
             mode = SETTINGS;
             System.out.println("F");
             window.setVisible(false);
-            settingsWindow.setVisible(true);
+            //settingsWindow.setVisible(true);
+            add(settingsWindow);
+            repaint();
         }
     }
     
@@ -37,6 +39,7 @@ public class MainWindow extends JFrame implements ActionListener {
         super("Physics Project");
         MAIN = this;
         settingsWindow = new SettingsWindow();
+        add(settingsWindow);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window = new WindowManager();
         setUndecorated(true);
