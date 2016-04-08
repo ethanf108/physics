@@ -24,13 +24,20 @@ import org.dyn4j.geometry.Vector2;
 
 public class LayoutManager implements ActionListener {
 
-    Font CurrentFont = null;
+    static Font CurrentFont = null;
     WindowManager source;
     JButton deleteAll = new JButton("Delete all Objects");
     JButton close = new JButton("Close");
     JButton pause = new JButton("Pause");
     public static JButton settingsPhys = new JButton("Settings");
     JCheckBox isStatic = new JCheckBox("Static Object?");
+    static JPanel buttonsPanel = new JPanel();
+
+    public static void setFont(Font f) {
+        for (Component comp : buttonsPanel.getComponents()) {
+            comp.setFont(f);
+        }
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -54,7 +61,7 @@ public class LayoutManager implements ActionListener {
             } else {
                 pause.setText("Pause");
             }
-        }else if(e.getSource().equals(settingsPhys)){
+        } else if (e.getSource().equals(settingsPhys)) {
             isPaused = true;
         }
     }
@@ -98,12 +105,12 @@ public class LayoutManager implements ActionListener {
                 }));
 
         //buttons
-        JPanel buttonsPanel = new JPanel();
         Color c = WindowManager.GameObject.colorGen();
         close.setBackground(c);
         pause.setBackground(c);
         deleteAll.setBackground(c);
         isStatic.setBackground(c);
+        settingsPhys.setBackground(c);
 
         buttonsPanel.setBackground(c);
         buttonsPanel.add(close);
@@ -138,7 +145,6 @@ public class LayoutManager implements ActionListener {
         s.setBackground(c);
         panel.add(l);
         panel.add(s);
-        Font Manifesto;
         s.setForeground(Color.BLACK);
         BasicSliderUI sui = (BasicSliderUI) javax.swing.plaf.basic.BasicSliderUI.createUI(s);
 
@@ -172,6 +178,7 @@ public class LayoutManager implements ActionListener {
 
     public LayoutManager(WindowManager sourceWindow) {
         this.source = sourceWindow;
-        CurrentFont = new Font("verdana", 0, 15);
+        CurrentFont = new Font(MainWindow.prefs.get("FONTNAME", "verdana"),
+                0, MainWindow.prefs.getInt("FONTSIZE", 15));
     }
 }
