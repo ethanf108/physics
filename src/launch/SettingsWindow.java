@@ -1,21 +1,23 @@
 package launch;
 
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
+import static launch.MainWindow.PWID;
 
 public class SettingsWindow extends JPanel {
 
@@ -33,8 +35,8 @@ public class SettingsWindow extends JPanel {
     JPanel ButtonsPanel = new JPanel();
 
     public void close() {
-        MainWindow.MAIN.getContentPane().remove(this);
-        MainWindow.MAIN.CLOSESET();
+        CardLayout c = ((CardLayout)MainWindow.MAIN.getContentPane().getLayout());
+        c.show(MainWindow.MAIN.getContentPane(), PWID);
     }
 
     public SettingsWindow() {
@@ -95,12 +97,15 @@ public class SettingsWindow extends JPanel {
         });
         FontSelector.setSelectedIndex(MainWindow.prefs.getInt("FONTINDEX", 0));
         FontDemo.setFont(new Font(MainWindow.prefs.get("FONTNAME", "verdana"), 0, MainWindow.prefs.getInt("FONTSIZE", 15)));
-        add(FontDemo);
+        FontDemoPanel.add(FontDemo);
+        add(FontDemoPanel);
+//JColorChooser colorChooser = new JColorChooser();
 
         FontSize.addChangeListener((ChangeEvent e) -> {
             FontSizeLabel.setText("Size: " + FontSize.getValue());
             FontDemo.setFont(new Font(((Font) FontSelector.getSelectedItem()).getName(), 0, ((JSlider) e.getSource()).getValue()));
             FontDemo.repaint();
         });
+        //add(colorChooser);
     }
 }
