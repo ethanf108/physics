@@ -37,6 +37,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
     public double StartingAngVel = 0.0;
     public double FricTion = 0.0;
     public double AirRes = 0.00;
+    public static boolean NameShowing = false;
     public LayoutManager customLayoutManager = null;
 //USERVARS
     public static boolean isNextStaticObject = false;
@@ -50,8 +51,8 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
         Polygon polyShape = Geometry.createUnitCirclePolygon(Sides, Size);
-
-        ObjectYo.setUserData("NOT FLOOR");
+        ObjectYo.setUserData(LayoutManager.nameField.getText());
+        LayoutManager.nameField.setText("");
         ObjectYo.setLinearDamping(AirRes);
         ObjectYo.addFixture(polyShape).setFriction(FricTion);
         ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
@@ -141,21 +142,26 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
                 g.setColor(Color.BLACK);
                 AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
                 g.transform(yFlip);
-                if (this.mass.getType().equals(MassType.NORMAL)) {
+                if (!NameShowing) {
+                    if (this.mass.getType().equals(MassType.NORMAL)) {
 
-                    g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
-                    g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
+                        g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
+                        g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
 
+                    }
+                    if (!getUserData().equals("Floor")) {
+                        g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
+                    }
+                } else {
+                    if(this.userData!=null){
+                    g.drawString((String)this.userData, -5, 2);
+                    }
                 }
-                if (!getUserData().equals("FLOOR")) {
-                    g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
-                }
+
+                g.setTransform(ot);
             }
-
-            g.setTransform(ot);
         }
     }
-
     /**
      * The canvas to draw to
      */
@@ -189,8 +195,6 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         add(before);
 
         // add a window listener
-        
-
         // create the size of the window
         Dimension size = new Dimension(800, 600);
         setSize(Toolkit.getDefaultToolkit().getScreenSize());
@@ -231,7 +235,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         // create the floor
         Rectangle floorRect = new Rectangle(15.0, 1.0);
         GameObject floor = new GameObject();
-        floor.setUserData("FLOOR");
+        floor.setUserData("Floor");
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
         floor.translate(0.0, -4.0);
@@ -355,5 +359,4 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         return this.stopped;
     }
 
-   
 }
