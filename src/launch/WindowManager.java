@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
+import org.dyn4j.dynamics.Settings;
 import org.dyn4j.dynamics.World;
 import org.dyn4j.geometry.Convex;
 import org.dyn4j.geometry.Geometry;
@@ -50,14 +51,21 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
 
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
-        Polygon polyShape = Geometry.createUnitCirclePolygon(Sides, Size);
-        ObjectYo.setUserData(LayoutManager.nameField.getText());
+        int tsides = Sides;
+        double tsize =  Size;
+        double tairres = AirRes;
+        double tfric = FricTion;
+        boolean tisstatic = isNextStaticObject;
+        double tangvel = -StartingAngVel;
+        String tname = LayoutManager.nameField.getText();
+        Polygon polyShape = Geometry.createUnitCirclePolygon(tsides, tsize);
+        ObjectYo.setUserData(tname);
         LayoutManager.nameField.setText("");
-        ObjectYo.setLinearDamping(AirRes);
-        ObjectYo.addFixture(polyShape).setFriction(FricTion);
-        ObjectYo.setMass(isNextStaticObject ? MassType.INFINITE : MassType.NORMAL);
+        ObjectYo.setLinearDamping(tairres);
+        ObjectYo.addFixture(polyShape).setFriction(tfric);
+        ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
-        ObjectYo.setAngularVelocity(Math.toRadians(-StartingAngVel * 10.0));
+        ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
         this.world.addBody(ObjectYo);
 
     }
@@ -206,8 +214,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
 
         setBounds(0, 0, getToolkit().getScreenSize().width,
                 getToolkit().getScreenSize().height);        // add the canvas to the JFrame
-        this.add(this.canvas);
-
+        this.add(canvas);
         // make the JFrame not resizable
         // (this way I dont have to worry about resize events)
         // size everything
@@ -338,15 +345,16 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         // draw all the objects in the world
         for (int i = 0; i < this.world.getBodyCount(); i++) {
             // get the object
-            if (this.world.getBody(i).getTransform().getTranslationY() < -7.0) {
-                this.world.removeBody(this.world.getBody(i));
-                continue;
-            }
-            GameObject go = (GameObject) this.world.getBody(i);
-            // draw the object
             if (this.world.getBodyCount() == 0) {
                 break;
             }
+            if (this.world.getBody(i).getTransform().getTranslationY() < -7.0) {
+                this.world.removeBody(this.world.getBody(i));
+                 break;
+            }
+            GameObject go = (GameObject) this.world.getBody(i);
+            // draw the object
+            
             go.render(g);
         }
     }
