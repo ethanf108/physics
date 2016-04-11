@@ -10,6 +10,7 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
 import javax.swing.BoxLayout;
@@ -27,7 +28,7 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class WindowManager extends JPanel implements MouseListener, KeyEventDispatcher {
+public class WindowManager extends JPanel implements MouseListener, MouseMotionListener, KeyEventDispatcher {
 //SETTINGS
 
     public static final byte VelocityDecimals = 2;
@@ -40,9 +41,12 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
     public double AirRes = 0.00;
     public static boolean NameShowing = false;
     public LayoutManager customLayoutManager = null;
-//USERVARS
+    public static boolean MouseDown = false;
+    public static double oldX = 0;
+    public static double oldY = 0;
     public static boolean isNextStaticObject = false;
     public static boolean isPaused = false;
+    public static double Bounce = 0;
     public static final double NANO_TO_BASE = 1.0e9;
 
     void addRandOb(int x, int y) {
@@ -56,7 +60,9 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         Polygon polyShape = Geometry.createUnitCirclePolygon(tsides, tsize);
         ObjectYo.setUserData(tname);
         LayoutManager.nameField.setText("");
-        ObjectYo.addFixture(polyShape).setFriction(tfric);
+        BodyFixture Fix = ObjectYo.addFixture(polyShape);
+        Fix.setFriction(tfric);
+        Fix.setRestitution(Bounce);
         ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
@@ -110,6 +116,23 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         return false;
     }
 
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+        for (Body b : this.world.getBodies()) {
+            if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
+
+                return;
+            }
+        }
+    }
+
     public static class GameObject extends Body {
 
         protected Color color;
@@ -152,7 +175,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
 
                     }
                     if (!getUserData().equals("Floor")) {
-                        g.drawString(Double.toString(Math.round(Math.toDegrees(this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
+                        g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
                 } else {
                     if (this.userData != null) {
@@ -168,6 +191,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
     protected World world;
     protected boolean stopped;
     protected long last;
+
     public WindowManager() {
         super();
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -184,16 +208,18 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
         this.canvas.setMaximumSize(size);
 
         setBounds(0, 0, getToolkit().getScreenSize().width,
-                getToolkit().getScreenSize().height); 
+                getToolkit().getScreenSize().height);
         this.add(canvas);
         initializeWorld();
         this.stopped = false;
         world.setGravity(new Vector2(0, -9.8));
         before.add(customLayoutManager.layoutSettings());
     }
+
     protected final void initializeWorld() {
         this.world = new World();
         this.canvas.addMouseListener(this);
+        this.canvas.addMouseMotionListener(this);
         Rectangle floorRect = new Rectangle(15.0, 1.0);
         GameObject floor = new GameObject();
         floor.setUserData("Floor");
@@ -241,6 +267,7 @@ public class WindowManager extends JPanel implements MouseListener, KeyEventDisp
             this.world.update(elapsedTime / TimeSlow);
         }
     }
+
     protected void render(Graphics2D g) {
         g.setColor(Color.WHITE);
         g.fillRect(-400, -300, 800, 600);

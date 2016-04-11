@@ -27,16 +27,9 @@ public final class SettingsWindow extends JPanel {
     JLabel FontLabel = new JLabel("Font: ");
     JLabel FontSizeLabel = new JLabel("Size: 12");
     JSlider FontSize = new JSlider(1, 20, 12);
-    JLabel FontDemo = new JLabel("The quick brown fox jumps over the lazy dog");
-    JButton cancel = new JButton("Cancel");
-    JButton save = new JButton("Save");
-    JButton close = new JButton("Exit");
+    JLabel FontDemo = new JLabel("The quick brown fox jumps over the lazy dog");    JButton save = new JButton("Save");
     JPanel ButtonsPanel = new JPanel();
 
-    public void close() {
-        CardLayout c = ((CardLayout) MainWindow.MAIN.getContentPane().getLayout());
-        c.show(MainWindow.MAIN.getContentPane(), PWID);
-    }
 
     public SettingsWindow() {
         super();
@@ -46,17 +39,9 @@ public final class SettingsWindow extends JPanel {
         FontSize.setValue(MainWindow.prefs.getInt("FONTSIZE", 15));
         Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
         ButtonsPanel.setLayout(new FlowLayout());
-        ButtonsPanel.add(cancel);
         ButtonsPanel.add(save);
-        ButtonsPanel.add(close);
         ButtonsPanel.setMaximumSize(new Dimension(ButtonsPanel.getMaximumSize().height, ButtonsPanel.getPreferredSize().width));
         add(ButtonsPanel);
-        cancel.addActionListener((ActionEvent e) -> {
-            close();
-        });
-        close.addActionListener((ActionEvent e) -> {
-            System.exit(0);
-        });
         save.addActionListener((ActionEvent e) -> {
             MainWindow.prefs.put("FONTNAME", ((Font) FontSelector.getSelectedItem()).getName());
             MainWindow.prefs.putInt("FONTSIZE", FontSize.getValue());
@@ -64,7 +49,6 @@ public final class SettingsWindow extends JPanel {
             LayoutManager.setFont(
                     new Font(
                             ((Font) FontSelector.getSelectedItem()).getName(), 0, FontSize.getValue()));
-            close();
         });
 
         FontSelector = new JComboBox<>(allFonts);

@@ -7,6 +7,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -46,8 +48,8 @@ public class LayoutManager implements ActionListener {
     JPanel HoldingPanel = new JPanel();
     public static final String EnvName = "Environment Variables";
     public static final String ObjName = "Object Variables";
-    public static final String SetName = "Object Variables";
-    JComboBox SettingsChooser = new JComboBox(new String[]{EnvName,ObjName,SetName});
+    public static final String SetName = "Application Settings";
+    public static JComboBox SettingsChooser = new JComboBox(new String[]{EnvName, ObjName, SetName});
 
     public static void setFont(Font f) {
         for (Component comp : buttonsPanel.getComponents()) {
@@ -128,6 +130,10 @@ public class LayoutManager implements ActionListener {
                 (JSlider slider) -> {
                     source.AirRes = slider.getValue() / 100.0;
                 }));
+        ObjPanel.add(createLabelSliderPanel(0, new JSlider(0, 120, 0), "Bounciness: ", 2, 0,
+                (JSlider slider) -> {
+                    source.Bounce = slider.getValue() / 100.0;
+                }));
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
         namePanel.setBackground(RandColor);
         JLabel t = new JLabel("Name of Object: ");
@@ -137,7 +143,7 @@ public class LayoutManager implements ActionListener {
         EnvPanel.setBackground(RandColor);
         ObjPanel.setBackground(RandColor);
         AllPanel.setBackground(RandColor);
-        nameField.setMaximumSize(new Dimension(nameField.getMaximumSize().width,nameField.getFont().getSize()*5+3));
+        nameField.setMaximumSize(new Dimension(nameField.getMaximumSize().width, nameField.getFont().getSize() * 5 + 3));
         namePanel.add(nameField);
         ObjPanel.add(namePanel);
         //buttons
@@ -165,13 +171,13 @@ public class LayoutManager implements ActionListener {
         close.addActionListener(this);
         AllPanel.add(EnvPanel, EnvName);
         AllPanel.add(ObjPanel, ObjName);
-        AllPanel.add(new SettingsWindow(),SetName);
+        AllPanel.add(new SettingsWindow(), SetName);
         ShowPanel(EnvName);
         HoldingPanel.add(SettingsChooser);
         HoldingPanel.add(AllPanel);
         HoldingPanel.add(buttonsPanel);
-        SettingsChooser.addItemListener((ItemEvent s)->{
-                ShowPanel((String)SettingsChooser.getSelectedItem());
+        SettingsChooser.addItemListener((ItemEvent s) -> {
+            ShowPanel((String) SettingsChooser.getSelectedItem());
         });
         return HoldingPanel;
 
