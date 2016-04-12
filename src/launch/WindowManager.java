@@ -13,13 +13,14 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 
 import javax.swing.JPanel;
 
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
-import org.dyn4j.dynamics.Settings;
 import org.dyn4j.dynamics.World;
 import org.dyn4j.geometry.Convex;
 import org.dyn4j.geometry.Geometry;
@@ -44,22 +45,72 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static boolean MouseDown = false;
     public static double oldX = 0;
     public static double oldY = 0;
+    public static double X = 0;
+    public static double Y = 0;
     public static boolean isNextStaticObject = false;
     public static boolean isPaused = false;
     public static double Bounce = 0;
     public static final double NANO_TO_BASE = 1.0e9;
-    
-    public static enum EnvType {
-        FloorOnly,
-        BoxedOut;
-    }
-    public static EnvType Env;
 
-    public void changeEnv(EnvType t) {
+    public void ApplyForceThread() throws InterruptedException {
+        Thread.sleep(50);
+    }
+
+    public void CreateFloor() {
+        Rectangle floorRect = new Rectangle(15.0, 1.0);
+        GameObject floor = new GameObject();
+        UserData.Generate(floor, "Floor", true);
+        floor.addFixture(new BodyFixture(floorRect));
+        floor.setMass(MassType.INFINITE);
+        floor.translate(0.0, -4.0);
+        this.world.addBody(floor);
+    }
+
+    public void CreateBox() {
+        Rectangle Floor = new Rectangle(20.0, 1.0);
+        GameObject FloorO = new GameObject();
+        UserData.Generate(FloorO, "Floor", true);
+        FloorO.addFixture(new BodyFixture(Floor));
+        FloorO.setMass(MassType.INFINITE);
+        FloorO.translate(0, -5.25);
+        this.world.addBody(FloorO);
+        Rectangle Ceil = new Rectangle(20.0, 1.0);
+        GameObject CeilO = new GameObject();
+        UserData.Generate(CeilO, "Floor", true);
+        CeilO.addFixture(new BodyFixture(Ceil));
+        CeilO.setMass(MassType.INFINITE);
+        CeilO.translate(0,8.05);
+        this.world.addBody(CeilO);
+        Rectangle Left = new Rectangle(1.0, 15.0);
+        GameObject LeftO = new GameObject();
+        UserData.Generate(LeftO, "Floor", true);
+        LeftO.addFixture(new BodyFixture(Left));
+        LeftO.setMass(MassType.INFINITE);
+        LeftO.translate(-9.3, 1.1);
+        this.world.addBody(LeftO);
+        Rectangle Right = new Rectangle(1.0, 15.0);
+        GameObject RightO = new GameObject();
+        UserData.Generate(RightO, "Floor", true);
+        RightO.addFixture(new BodyFixture(Right));
+        RightO.setMass(MassType.INFINITE);
+        RightO.translate(9.3,1.1);
+        this.world.addBody(RightO);
+    }
+    public static String Env;
+
+    public void changeEnv(String t) {
         Env = t;
         world.removeAllBodies();
-    }
+        switch (Env) {
+            case "Floor Only":
+                CreateFloor();
+                break;
+            case "Boxed":
+                CreateBox();
+                break;
 
+        }
+    }
 
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
@@ -77,7 +128,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
-        UserData.Generate(ObjectYo, tname,false);
+        UserData.Generate(ObjectYo, tname, false);
         this.world.addBody(ObjectYo);
 
     }
@@ -86,8 +137,6 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public void mouseClicked(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-        JPanel p = null;
-        p.setLayout(null);
         for (Body b : this.world.getBodies()) {
             if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
                 this.world.removeBody(b);
@@ -137,14 +186,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-        for (Body b : this.world.getBodies()) {
-            if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
 
-                return;
-            }
-        }
     }
 
     public static class GameObject extends Body {
@@ -188,13 +230,11 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                         g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
 
                     }
-                    if (!((UserData)getUserData()).isFix()) {
+                    if (!((UserData) getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
-                } else {
-                    if (this.userData != null) {
-                        g.drawString(((UserData) this.userData).getName(), -5, 2);
-                    }
+                } else if (this.userData != null) {
+                    g.drawString(((UserData) this.userData).getName(), -5, 2);
                 }
 
                 g.setTransform(ot);
@@ -234,13 +274,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         this.world = new World();
         this.canvas.addMouseListener(this);
         this.canvas.addMouseMotionListener(this);
-        Rectangle floorRect = new Rectangle(15.0, 1.0);
-        GameObject floor = new GameObject();
-        UserData.Generate(floor, "Floor",true);
-        floor.addFixture(new BodyFixture(floorRect));
-        floor.setMass(MassType.INFINITE);
-        floor.translate(0.0, -4.0);
-        this.world.addBody(floor);
+        CreateFloor();
     }
 
     public void start() {
@@ -253,6 +287,19 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 while (!isStopped()) {
                     gameLoop();
 
+                }
+            }
+        };
+        Thread ApplyForcethread = new Thread() {
+            @Override
+            public void run() {
+                while (!isStopped()) {
+                    try {
+                        ApplyForceThread();
+                    } catch (InterruptedException ex) {
+                        new Popup(ex);
+                        MainWindow.MAIN.dispose();
+                    }
                 }
             }
         };

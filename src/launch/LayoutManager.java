@@ -12,6 +12,9 @@ import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -46,13 +49,69 @@ public class LayoutManager implements ActionListener {
     static JPanel AllPanel = new JPanel();
     JPanel HoldingPanel = new JPanel();
     JPanel EnvChooserPanel = new JPanel();
+    JPanel PresetChooserPanel = new JPanel();
+    JComboBox PresetChooser = new JComboBox(new String[]{"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Custom"});
     public static final String EnvName = "Environment Variables";
     public static final String ObjName = "Object Variables";
     public static final String SetName = "Application Settings";
-    public static final String BasicEnv = "Basic";
-    public static final String BoxEnv = "Boxed Layout";
+    public static final String BasicEnv = "Floor Only";
+    public static final String BoxEnv = "Boxed";
     public static JComboBox SettingsChooser = new JComboBox(new String[]{EnvName, ObjName, SetName});
     public static JComboBox EnvChooser = new JComboBox(new String[]{BasicEnv, BoxEnv});
+    private boolean PresetCustom = false;
+
+    public double getPresetgrav(String s) {
+        switch (s) {
+            case "Mercury":
+                return 3.7;
+            case "Venus":
+                return 8.87;
+            case "Earth":
+                return 9.8;
+            case "Mars":
+                return 3.71;
+            case "Jupiter":
+                return 24.92;
+            case "Saturn":
+                return 10.44;
+            case "Uranus":
+                return 8.87;
+            case "Neptune":
+                return 11.15;
+            case "Pluto":
+                return 0.58;
+            case "Moon":
+                return 1.62;
+            default:
+                return -source.world.getGravity().y;
+        }
+    }
+    public double getAirRes(String s) {
+        switch (s) {
+            case "Mercury":
+                return 10e-15;
+            case "Venus":
+                return 92;
+            case "Earth":
+                return 1;
+            case "Mars":
+                return 6e-3;
+            case "Jupiter":
+                return 100;
+            case "Saturn":
+                return 100;
+            case "Uranus":
+                return 100;
+            case "Neptune":
+                return 100;
+            case "Pluto":
+                return 3e-6;
+            case "Moon":
+                return 16e-2;
+            default:
+                return source.AirRes;
+        }
+    }
 
     public static void setFont(Font f) {
         for (Component comp : buttonsPanel.getComponents()) {
@@ -61,16 +120,10 @@ public class LayoutManager implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e){
+    public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(this.deleteAll)) {
             source.world.removeAllBodies();
-            Rectangle floorRect = new Rectangle(15.0, 1.0);
-            WindowManager.GameObject floor = new WindowManager.GameObject();
-            floor.addFixture(new BodyFixture(floorRect));
-            floor.setMass(MassType.INFINITE);
-            floor.translate(0.0, -4.0);
-            UserData.Generate(floor, "Floor", true);
-            source.world.addBody(floor);
+            source.changeEnv(WindowManager.Env);
         } else if (e.getSource().equals(isStatic)) {
             isNextStaticObject = isStatic.isSelected();
         } else if (e.getSource().equals(close)) {
@@ -96,8 +149,8 @@ public class LayoutManager implements ActionListener {
         CardLayout c = ((CardLayout) AllPanel.getLayout());
         c.show(AllPanel, ID);
     }
-
     public JPanel layoutSettings() {
+
         source.setLayout(new BoxLayout(source, BoxLayout.Y_AXIS));
         EnvChooserPanel.setBackground(RandColor);
         EnvChooserPanel.setLayout(new BoxLayout(EnvChooserPanel, BoxLayout.X_AXIS));
@@ -125,11 +178,11 @@ public class LayoutManager implements ActionListener {
                 (JSlider slider) -> {
                     source.FricTion = slider.getValue() / 10.0;
                 }));
-        EnvPanel.add(createLabelSliderPanel(0, new JSlider(0, 100, 0), "Air Resistance: ", 2, 0,
+        EnvPanel.add(createLabelSliderPanel(0, new JSlider(0, 1000, 0), "Air Resistance: ", 1, 0,
                 (JSlider slider) -> {
                     source.AirRes = slider.getValue() / 100.0;
                 }));
-        ObjPanel.add(createLabelSliderPanel(0, new JSlider(0, 120, 0), "Bounciness: ", 2, 0,
+        ObjPanel.add(createLabelSliderPanel(0, new JSlider(0, 100, 0), "Bounciness: ", 2, 0,
                 (JSlider slider) -> {
                     source.Bounce = slider.getValue() / 100.0;
                 }));
@@ -169,7 +222,6 @@ public class LayoutManager implements ActionListener {
         AllPanel.add(ObjPanel, ObjName);
         AllPanel.add(new SettingsWindow(), SetName);
         ShowPanel(EnvName);
-        SettingsChooser.setBackground(RandColor);
         HoldingPanel.setBackground(RandColor);
         HoldingPanel.add(SettingsChooser);
         HoldingPanel.add(AllPanel);
@@ -180,9 +232,14 @@ public class LayoutManager implements ActionListener {
         EnvChooserPanel.add(EnvChooser);
         EnvChooserPanel.setMaximumSize(new Dimension(EnvChooserPanel.getMaximumSize().width, EnvChooserPanel.getPreferredSize().height));
         EnvPanel.add(EnvChooserPanel);
-        EnvChooser.addItemListener((ItemEvent l)->{
-        
+        EnvChooser.addItemListener((ItemEvent l) -> {
+            source.changeEnv((String) EnvChooser.getSelectedItem());
         });
+        PresetChooserPanel.setLayout(new BoxLayout(PresetChooserPanel, BoxLayout.X_AXIS));
+        PresetChooserPanel.setBackground(RandColor);
+        PresetChooserPanel.add(PresetChooser);
+        PresetChooserPanel.setMaximumSize(new Dimension(PresetChooserPanel.getMaximumSize().width, PresetChooserPanel.getPreferredSize().height));
+        EnvPanel.add(PresetChooserPanel);
         return HoldingPanel;
 
     }
@@ -201,10 +258,73 @@ public class LayoutManager implements ActionListener {
         s.setBackground(RandColor);
         panel.add(l);
         panel.add(s);
+        if (t.equals("Gravity: ")) {
+            PresetChooser.addItemListener((ItemEvent e) -> {
+                PresetCustom = false;
+                if (PresetChooser.getSelectedItem().equals("Custom")) {
+                    return;
+                }
+                int tmpVal = (int) (getPresetgrav((String) PresetChooser.getSelectedItem()) * 10);
+                s.setValue(tmpVal);
+                if (div > 0) {
 
+                    char[] zeros = new char[div];
+                    Arrays.fill(zeros, '0');
+                    char[] zerosS = new char[d];
+                    Arrays.fill(zerosS, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    if (result.charAt(0) == '.') {
+                        result = "0" + result;
+                    }
+                    l.setText(t + result);
+                } else if (div <= 0) {
+                    char[] zeros = new char[(d)];
+                    Arrays.fill(zeros, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    l.setText(t + result);
+                }
+                r.run(s);
+            });
+        }
+        if (t.equals("Air Resistance: ")) {
+            PresetChooser.addItemListener((ItemEvent e) -> {
+                PresetCustom = false;
+                if (PresetChooser.getSelectedItem().equals("Custom")) {
+                    return;
+                }
+                int tmpVal = (int) (getAirRes((String) PresetChooser.getSelectedItem())*10);
+                s.setValue(tmpVal);
+                if (div > 0) {
+
+                    char[] zeros = new char[div];
+                    Arrays.fill(zeros, '0');
+                    char[] zerosS = new char[d];
+                    Arrays.fill(zerosS, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zerosS) + "." + new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    if (result.charAt(0) == '.') {
+                        result = "0" + result;
+                    }
+                    l.setText(t + result);
+                } else if (div <= 0) {
+                    char[] zeros = new char[(d)];
+                    Arrays.fill(zeros, '0');
+                    DecimalFormat formatter = new DecimalFormat(new String(zeros));
+                    String result = formatter.format((s.getValue() / Math.pow(10, div)));
+                    l.setText(t + result);
+                }
+                r.run(s);
+            });
+        }
         l.setFont(CurrentFont);
 
         s.addChangeListener((ChangeEvent e) -> {
+            if (PresetCustom && (t.equals("Gravity: ")||t.equals("Air Resistance: "))) {
+                PresetChooser.setSelectedItem("Custom");
+            }
+            PresetCustom = true;
             if (div > 0) {
 
                 char[] zeros = new char[div];

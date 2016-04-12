@@ -23,46 +23,50 @@ public class MainWindow extends JFrame {
     public static String CCID = "2";
 
     public static void handleExceptionPopup(Throwable e) {
-                System.out.print("ERROR");
-                MAIN.dispose();
-                MAIN=null;
-                settingsWindow = null;
-                window=null;
-                new Popup(e);
+        System.out.print("ERROR");
+        MAIN.dispose();
+        MAIN = null;
+        settingsWindow = null;
+        window = null;
+        new Popup(e);
     }
+
+
 
     public MainWindow() {
         super("Physics Project");
         MAIN = this;
-        prefs = Preferences.userRoot().node(this.getClass().getName());
-        if (!prefs.getBoolean("EXISTS", false)) {
-            prefs.putBoolean("EXISTS", true);
-            prefs.put("FONTNAME", "verdana");
-            prefs.putInt("FONTSIZE", 15);
-            prefs.putInt("FONTINDEX", 0);
-        }
-        Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread th, Throwable e) {
-                handleExceptionPopup(e);
+            prefs = Preferences.userRoot().node("FergusonPhysicsProject");
+
+            if (!prefs.getBoolean("EXISTS", false)) {
+                prefs.putBoolean("EXISTS", true);
+                prefs.put("FONTNAME", "verdana");
+                prefs.putInt("FONTSIZE", 15);
+                prefs.putInt("FONTINDEX", 0);
             }
-        };
-        Thread.setDefaultUncaughtExceptionHandler(h);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window = new WindowManager();
-        setUndecorated(true);
-        add(window);
-        setVisible(true);
-        window.start();
-        setSize(Toolkit.getDefaultToolkit().getScreenSize());
-        setResizable(false);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                // before we stop the JVM stop the example
-                window.stop();
-                super.windowClosing(e);
-            }
-        });
+            Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+                public void uncaughtException(Thread th, Throwable e) {
+                    handleExceptionPopup(e);
+                }
+            };
+            Thread.setDefaultUncaughtExceptionHandler(h);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            window = new WindowManager();
+            setUndecorated(true);
+            add(window);
+            setVisible(true);
+            window.start();
+            setSize(Toolkit.getDefaultToolkit().getScreenSize());
+            setResizable(false);
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    // before we stop the JVM stop the example
+                    window.stop();
+                    super.windowClosing(e);
+                }
+            });
+        
     }
 
     public static void main(String[] args) {
