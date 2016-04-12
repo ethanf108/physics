@@ -15,12 +15,21 @@ public class MainWindow extends JFrame {
 
     static MainWindow MAIN = null;
 
-    WindowManager window = null;
-    SettingsWindow settingsWindow = null;
+    static WindowManager window = null;
+    static SettingsWindow settingsWindow = null;
     static Preferences prefs = null;
     public static String PWID = "0";
     public static String SWID = "1";
     public static String CCID = "2";
+
+    public static void handleExceptionPopup(Throwable e) {
+                System.out.print("ERROR");
+                MAIN.dispose();
+                MAIN=null;
+                settingsWindow = null;
+                window=null;
+                new Popup(e);
+    }
 
     public MainWindow() {
         super("Physics Project");
@@ -32,8 +41,14 @@ public class MainWindow extends JFrame {
             prefs.putInt("FONTSIZE", 15);
             prefs.putInt("FONTINDEX", 0);
         }
+        Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+            public void uncaughtException(Thread th, Throwable e) {
+                handleExceptionPopup(e);
+            }
+        };
+        Thread.setDefaultUncaughtExceptionHandler(h);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window = null;
+        window = new WindowManager();
         setUndecorated(true);
         add(window);
         setVisible(true);
@@ -60,12 +75,7 @@ public class MainWindow extends JFrame {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
-        try {
-            MainWindow mw = new MainWindow();
-        } catch (Exception e) {
-            System.out.print("ERROR");
-            new Popup(e);
-        }
+        new MainWindow();
     }
 
 }

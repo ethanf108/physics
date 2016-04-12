@@ -23,7 +23,7 @@ import static launch.LayoutManager.AllPanel;
  */
 public class Popup extends JFrame {
 
-    public Popup(Exception e) {
+    public Popup(Throwable e) {
         super("Error has occurred");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new CardLayout());
@@ -36,7 +36,6 @@ public class Popup extends JFrame {
         Reg2.add(new JLabel("To view the detailed error message, please click the button below. "));
         Reg2.add(new JLabel("If not, you can choose to close the program, or Re-Launch"));
         Reg.add(Reg2);
-        
         JPanel RegSub = new JPanel();
         RegSub.setLayout(new BoxLayout(RegSub, BoxLayout.X_AXIS));
         RegSub.setAlignmentX(LEFT_ALIGNMENT);
@@ -47,7 +46,7 @@ public class Popup extends JFrame {
         D.addActionListener((ActionEvent ae)->{
             CardLayout c = ((CardLayout) this.getContentPane().getLayout());
         c.show(this.getContentPane(), "1");});
-        R.addActionListener((ActionEvent ae)->{dispose();new MainWindow();});
+        R.addActionListener((ActionEvent ae)->{dispose();RestartClass.restartApplication();});
         RegSub.add(C);
         RegSub.add(R);
         RegSub.add(D);

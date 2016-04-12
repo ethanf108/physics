@@ -48,6 +48,18 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static boolean isPaused = false;
     public static double Bounce = 0;
     public static final double NANO_TO_BASE = 1.0e9;
+    
+    public static enum EnvType {
+        FloorOnly,
+        BoxedOut;
+    }
+    public static EnvType Env;
+
+    public void changeEnv(EnvType t) {
+        Env = t;
+        world.removeAllBodies();
+    }
+
 
     void addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
@@ -74,6 +86,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public void mouseClicked(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
+        JPanel p = null;
+        p.setLayout(null);
         for (Body b : this.world.getBodies()) {
             if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
                 this.world.removeBody(b);

@@ -1,6 +1,5 @@
 package launch;
 
-import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,9 +15,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
-import static launch.MainWindow.PWID;
 
 public final class SettingsWindow extends JPanel {
+
     JComboBox<Font> FontSelector = null;
     JPanel FontSelectPanel = new JPanel();
     JPanel FontSizePanel = new JPanel();
@@ -26,9 +25,9 @@ public final class SettingsWindow extends JPanel {
     JLabel FontLabel = new JLabel("Font: ");
     JLabel FontSizeLabel = new JLabel("Size: 12");
     JSlider FontSize = new JSlider(1, 20, 12);
-    JLabel FontDemo = new JLabel("The quick brown fox jumps over the lazy dog");    JButton save = new JButton("Save");
+    JLabel FontDemo = new JLabel("The quick brown fox jumps over the lazy dog");
+    JButton save = new JButton("Save");
     JPanel ButtonsPanel = new JPanel();
-
 
     public SettingsWindow() {
         super();

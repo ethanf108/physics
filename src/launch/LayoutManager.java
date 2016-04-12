@@ -61,7 +61,7 @@ public class LayoutManager implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e){
         if (e.getSource().equals(this.deleteAll)) {
             source.world.removeAllBodies();
             Rectangle floorRect = new Rectangle(15.0, 1.0);
@@ -117,10 +117,6 @@ public class LayoutManager implements ActionListener {
                 (JSlider slider) -> {
                     source.Size = slider.getValue() / 10.0;
                 }));
-        EnvPanel.add(createLabelSliderPanel(45, new JSlider(1, 45, 45), "Scale: ", 0, 2,
-                (JSlider slider) -> {
-                    WindowManager.SCALE = (byte) slider.getValue();
-                }));
         ObjPanel.add(createLabelSliderPanel(0, new JSlider(-36, 36, 0), "Angular Velocity: ", -1, 3,
                 (JSlider slider) -> {
                     source.StartingAngVel = slider.getValue();
@@ -173,6 +169,8 @@ public class LayoutManager implements ActionListener {
         AllPanel.add(ObjPanel, ObjName);
         AllPanel.add(new SettingsWindow(), SetName);
         ShowPanel(EnvName);
+        SettingsChooser.setBackground(RandColor);
+        HoldingPanel.setBackground(RandColor);
         HoldingPanel.add(SettingsChooser);
         HoldingPanel.add(AllPanel);
         HoldingPanel.add(buttonsPanel);
@@ -182,6 +180,9 @@ public class LayoutManager implements ActionListener {
         EnvChooserPanel.add(EnvChooser);
         EnvChooserPanel.setMaximumSize(new Dimension(EnvChooserPanel.getMaximumSize().width, EnvChooserPanel.getPreferredSize().height));
         EnvPanel.add(EnvChooserPanel);
+        EnvChooser.addItemListener((ItemEvent l)->{
+        
+        });
         return HoldingPanel;
 
     }
