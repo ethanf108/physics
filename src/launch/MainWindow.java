@@ -11,25 +11,13 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-public class MainWindow extends JFrame implements ActionListener {
+public class MainWindow extends JFrame {
 
     static MainWindow MAIN = null;
 
     WindowManager window = null;
     SettingsWindow settingsWindow = null;
     static Preferences prefs = null;
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (!e.getSource().equals(LayoutManager.settingsPhys)) {
-            System.out.println("F");
-            CardLayout c = ((CardLayout) getContentPane().getLayout());
-            c.show(this.getContentPane(), SWID);
-            repaint();
-        }
-    }
-
-
     public static String PWID = "0";
     public static String SWID = "1";
     public static String CCID = "2";
@@ -37,7 +25,6 @@ public class MainWindow extends JFrame implements ActionListener {
     public MainWindow() {
         super("Physics Project");
         MAIN = this;
-        setLayout(new CardLayout());
         prefs = Preferences.userRoot().node(this.getClass().getName());
         if (!prefs.getBoolean("EXISTS", false)) {
             prefs.putBoolean("EXISTS", true);
@@ -45,15 +32,10 @@ public class MainWindow extends JFrame implements ActionListener {
             prefs.putInt("FONTSIZE", 15);
             prefs.putInt("FONTINDEX", 0);
         }
-        settingsWindow = new SettingsWindow();
-      //  add(settingsWindow, SWID);
-
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window = new WindowManager();
+        window = null;
         setUndecorated(true);
-        add(window, PWID);
-        CardLayout c = ((CardLayout) getContentPane().getLayout());
-        c.show(this.getContentPane(), PWID);
+        add(window);
         setVisible(true);
         window.start();
         setSize(Toolkit.getDefaultToolkit().getScreenSize());
@@ -78,7 +60,12 @@ public class MainWindow extends JFrame implements ActionListener {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
         }
-        MainWindow mw = new MainWindow();
+        try {
+            MainWindow mw = new MainWindow();
+        } catch (Exception e) {
+            System.out.print("ERROR");
+            new Popup(e);
+        }
     }
 
 }

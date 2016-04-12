@@ -58,7 +58,6 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         double tangvel = -StartingAngVel;
         String tname = LayoutManager.nameField.getText();
         Polygon polyShape = Geometry.createUnitCirclePolygon(tsides, tsize);
-        ObjectYo.setUserData(tname);
         LayoutManager.nameField.setText("");
         BodyFixture Fix = ObjectYo.addFixture(polyShape);
         Fix.setFriction(tfric);
@@ -66,6 +65,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
+        UserData.Generate(ObjectYo, tname,false);
         this.world.addBody(ObjectYo);
 
     }
@@ -174,12 +174,12 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                         g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
 
                     }
-                    if (!getUserData().equals("Floor")) {
+                    if (!((UserData)getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
                 } else {
                     if (this.userData != null) {
-                        g.drawString((String) this.userData, -5, 2);
+                        g.drawString(((UserData) this.userData).getName(), -5, 2);
                     }
                 }
 
@@ -222,7 +222,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         this.canvas.addMouseMotionListener(this);
         Rectangle floorRect = new Rectangle(15.0, 1.0);
         GameObject floor = new GameObject();
-        floor.setUserData("Floor");
+        UserData.Generate(floor, "Floor",true);
         floor.addFixture(new BodyFixture(floorRect));
         floor.setMass(MassType.INFINITE);
         floor.translate(0.0, -4.0);
@@ -282,6 +282,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
             }
             GameObject go = (GameObject) this.world.getBody(i);
             go.setLinearDamping(AirRes);
+            go.setAngularDamping(AirRes);
             go.render(g);
         }
     }

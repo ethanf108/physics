@@ -38,7 +38,6 @@ public class LayoutManager implements ActionListener {
     JButton pause = new JButton("Pause");
     JPanel EnvPanel = new JPanel();
     JPanel ObjPanel = new JPanel();
-    public static JButton settingsPhys = new JButton("Settings");
     JCheckBox isStatic = new JCheckBox("Static Object?");
     JCheckBox showNames = new JCheckBox("Show Names");
     JPanel namePanel = new JPanel();
@@ -46,10 +45,14 @@ public class LayoutManager implements ActionListener {
     static JPanel buttonsPanel = new JPanel();
     static JPanel AllPanel = new JPanel();
     JPanel HoldingPanel = new JPanel();
+    JPanel EnvChooserPanel = new JPanel();
     public static final String EnvName = "Environment Variables";
     public static final String ObjName = "Object Variables";
     public static final String SetName = "Application Settings";
+    public static final String BasicEnv = "Basic";
+    public static final String BoxEnv = "Boxed Layout";
     public static JComboBox SettingsChooser = new JComboBox(new String[]{EnvName, ObjName, SetName});
+    public static JComboBox EnvChooser = new JComboBox(new String[]{BasicEnv, BoxEnv});
 
     public static void setFont(Font f) {
         for (Component comp : buttonsPanel.getComponents()) {
@@ -66,7 +69,7 @@ public class LayoutManager implements ActionListener {
             floor.addFixture(new BodyFixture(floorRect));
             floor.setMass(MassType.INFINITE);
             floor.translate(0.0, -4.0);
-            floor.setUserData("Floor");
+            UserData.Generate(floor, "Floor", true);
             source.world.addBody(floor);
         } else if (e.getSource().equals(isStatic)) {
             isNextStaticObject = isStatic.isSelected();
@@ -79,8 +82,6 @@ public class LayoutManager implements ActionListener {
             } else {
                 pause.setText("Pause");
             }
-        } else if (e.getSource().equals(settingsPhys)) {
-            isPaused = true;
         } else if (e.getSource().equals(showNames)) {
             source.NameShowing = showNames.isSelected();
         }
@@ -98,6 +99,8 @@ public class LayoutManager implements ActionListener {
 
     public JPanel layoutSettings() {
         source.setLayout(new BoxLayout(source, BoxLayout.Y_AXIS));
+        EnvChooserPanel.setBackground(RandColor);
+        EnvChooserPanel.setLayout(new BoxLayout(EnvChooserPanel, BoxLayout.X_AXIS));
         EnvPanel.setLayout(new BoxLayout(EnvPanel, BoxLayout.Y_AXIS));
         HoldingPanel.setLayout(new BoxLayout(HoldingPanel, BoxLayout.Y_AXIS));
         AllPanel.setLayout(new CardLayout());
@@ -151,7 +154,6 @@ public class LayoutManager implements ActionListener {
         pause.setBackground(RandColor);
         deleteAll.setBackground(RandColor);
         isStatic.setBackground(RandColor);
-        settingsPhys.setBackground(RandColor);
         buttonsPanel.setBackground(RandColor);
         showNames.setBackground(RandColor);
         buttonsPanel.add(close);
@@ -159,11 +161,9 @@ public class LayoutManager implements ActionListener {
         buttonsPanel.add(deleteAll);
         buttonsPanel.add(isStatic);
         buttonsPanel.add(showNames);
-        buttonsPanel.add(settingsPhys);
         for (Component comp : buttonsPanel.getComponents()) {
             comp.setFont(CurrentFont);
         }
-        settingsPhys.addActionListener(MainWindow.MAIN);
         deleteAll.addActionListener(this);
         isStatic.addActionListener(this);
         showNames.addActionListener(this);
@@ -179,6 +179,9 @@ public class LayoutManager implements ActionListener {
         SettingsChooser.addItemListener((ItemEvent s) -> {
             ShowPanel((String) SettingsChooser.getSelectedItem());
         });
+        EnvChooserPanel.add(EnvChooser);
+        EnvChooserPanel.setMaximumSize(new Dimension(EnvChooserPanel.getMaximumSize().width, EnvChooserPanel.getPreferredSize().height));
+        EnvPanel.add(EnvChooserPanel);
         return HoldingPanel;
 
     }

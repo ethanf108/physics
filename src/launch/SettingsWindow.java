@@ -19,7 +19,6 @@ import javax.swing.event.ChangeEvent;
 import static launch.MainWindow.PWID;
 
 public final class SettingsWindow extends JPanel {
-
     JComboBox<Font> FontSelector = null;
     JPanel FontSelectPanel = new JPanel();
     JPanel FontSizePanel = new JPanel();
@@ -66,6 +65,10 @@ public final class SettingsWindow extends JPanel {
         });
 
         FontSelectPanel.setLayout(new FlowLayout());
+        ButtonsPanel.setBackground(LayoutManager.RandColor);
+        FontDemoPanel.setBackground(LayoutManager.RandColor);
+        FontSizePanel.setBackground(LayoutManager.RandColor);
+        FontSelectPanel.setBackground(LayoutManager.RandColor);
         FontSelectPanel.add(FontLabel);
         FontSelectPanel.add(FontSelector);
         FontSizePanel.setLayout(new FlowLayout());
