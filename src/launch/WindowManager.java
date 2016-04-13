@@ -52,8 +52,33 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static double Bounce = 0;
     public static final double NANO_TO_BASE = 1.0e9;
 
+    public double convertToPosX(double x) {
+        return (x - 400.0) / SCALE;
+    }
+
+    public double convertToPosY(double y) {
+        return -((y - 350.0) / SCALE);
+    }
+
+    public Body getBodyByPos(double x, double y) {
+        for (Body b : this.world.getBodies()) {
+            if (b.contains(new Vector2(x, y))) {
+                return b;
+            }
+        }
+        return null;
+    }
+
     public void ApplyForceThread() throws InterruptedException {
-        Thread.sleep(50);
+        Thread.sleep(300);
+        Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
+        if (MouseDown && selectedBody != null) {
+            double xd = convertToPosX(X - oldX);
+            double yd = convertToPosY((Y - oldY));
+            System.out.println(""+xd+" "+yd);
+        }
+        oldX = X;
+        oldY = Y;
     }
 
     public void CreateFloor() {
@@ -79,7 +104,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         UserData.Generate(CeilO, "Floor", true);
         CeilO.addFixture(new BodyFixture(Ceil));
         CeilO.setMass(MassType.INFINITE);
-        CeilO.translate(0,8.05);
+        CeilO.translate(0, 8.05);
         this.world.addBody(CeilO);
         Rectangle Left = new Rectangle(1.0, 15.0);
         GameObject LeftO = new GameObject();
@@ -93,10 +118,10 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         UserData.Generate(RightO, "Floor", true);
         RightO.addFixture(new BodyFixture(Right));
         RightO.setMass(MassType.INFINITE);
-        RightO.translate(9.3,1.1);
+        RightO.translate(9.3, 1.1);
         this.world.addBody(RightO);
     }
-    public static String Env;
+    public static String Env = "Floor Only";
 
     public void changeEnv(String t) {
         Env = t;
@@ -126,7 +151,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         Fix.setFriction(tfric);
         Fix.setRestitution(Bounce);
         ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
-        ObjectYo.translate((x - 400.0) / SCALE, -((y - 350.0) / SCALE));
+        ObjectYo.translate(convertToPosX(x), -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
         UserData.Generate(ObjectYo, tname, false);
         this.world.addBody(ObjectYo);
@@ -138,8 +163,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         int x = e.getX();
         int y = e.getY();
         for (Body b : this.world.getBodies()) {
-            if (b.contains(new Vector2((x - 400.0) / SCALE, -((y - 350.0) / SCALE)))) {
-                this.world.removeBody(b);
+            if (b.contains(new Vector2((x - 400.0) / SCALE, convertToPosY(y)))) {
+                //this.world.removeBody(b);
                 return;
             }
         }
@@ -149,10 +174,12 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
 
     @Override
     public void mousePressed(MouseEvent e) {
+        MouseDown = true;
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        MouseDown = false;
     }
 
     @Override
@@ -181,12 +208,13 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
 
     @Override
     public void mouseDragged(MouseEvent e) {
-
+        mouseMoved(e);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
+        X = e.getX();
+        Y = e.getY();
     }
 
     public static class GameObject extends Body {
@@ -290,7 +318,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 }
             }
         };
-        Thread ApplyForcethread = new Thread() {
+        Thread ApplyForceThread = new Thread() {
             @Override
             public void run() {
                 while (!isStopped()) {
@@ -305,6 +333,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         };
         thread.setDaemon(true);
         thread.start();
+        ApplyForceThread.setDaemon(true);
+        ApplyForceThread.start();
     }
 
     protected void gameLoop() {
