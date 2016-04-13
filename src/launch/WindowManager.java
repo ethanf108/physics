@@ -13,8 +13,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 
 import javax.swing.JPanel;
@@ -30,7 +28,6 @@ import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
 public class WindowManager extends JPanel implements MouseListener, MouseMotionListener, KeyEventDispatcher {
-//SETTINGS
 
     public static final byte VelocityDecimals = 2;
     public final byte TimeSlow = 1;
@@ -68,15 +65,25 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         }
         return null;
     }
-
+    static double XChangeVelocity = 0;
+    static double YChangeVelocity = 0;
+    static double XMoveVelocity = 0;
+    static double YMoveVelocity = 0;
+boolean hasSelectedBody = false;
+Body currentSelectedBody = null;
     public void ApplyForceThread() throws InterruptedException {
-        Thread.sleep(300);
+        Thread.sleep(50);
         Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
-        if (MouseDown && selectedBody != null) {
-            double xd = convertToPosX(X - oldX);
-            double yd = convertToPosY((Y - oldY));
-            System.out.println(""+xd+" "+yd);
+        if(MouseDown && selectedBody != null){hasSelectedBody = true;currentSelectedBody = selectedBody;}
+        if(!MouseDown){hasSelectedBody = false; currentSelectedBody = null;}
+        if(hasSelectedBody){
+            currentSelectedBody.applyForce(new Vector2(XChangeVelocity*100.0,YChangeVelocity*100.0));
         }
+        XChangeVelocity = 100.0*(convertToPosX(X) - convertToPosX(oldX));
+        YChangeVelocity = 100.0*(convertToPosY(Y) - convertToPosY(oldY));
+        XMoveVelocity = convertToPosX(X) - convertToPosX(currentSelectedBody.getTransform().getTranslationX());
+        XMoveVelocity = convertToPosX(X) - convertToPosX(currentSelectedBody.getTransform().getTranslationX());
+        System.out.println(XChangeVelocity + " " + YChangeVelocity);
         oldX = X;
         oldY = Y;
     }
@@ -251,7 +258,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 g.setColor(Color.BLACK);
                 AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
                 g.transform(yFlip);
-                if (!NameShowing) {
+                if (false && !NameShowing) {
                     if (this.mass.getType().equals(MassType.NORMAL)) {
 
                         g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
@@ -261,10 +268,10 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                     if (!((UserData) getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
-                } else if (this.userData != null) {
+                } else if (false && this.userData != null) {
                     g.drawString(((UserData) this.userData).getName(), -5, 2);
                 }
-
+                g.drawString(XChangeVelocity + " " + YChangeVelocity,0, 0);
                 g.setTransform(ot);
             }
         }
