@@ -69,20 +69,27 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     static double YChangeVelocity = 0;
     static double XMoveVelocity = 0;
     static double YMoveVelocity = 0;
-boolean hasSelectedBody = false;
-Body currentSelectedBody = null;
+    boolean hasSelectedBody = false;
+    Body currentSelectedBody = null;
+
     public void ApplyForceThread() throws InterruptedException {
         Thread.sleep(50);
         Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
-        if(MouseDown && selectedBody != null){hasSelectedBody = true;currentSelectedBody = selectedBody;}
-        if(!MouseDown){hasSelectedBody = false; currentSelectedBody = null;}
-        if(hasSelectedBody){
-            currentSelectedBody.applyForce(new Vector2(XChangeVelocity*100.0,YChangeVelocity*100.0));
+        if (MouseDown && selectedBody != null) {
+            hasSelectedBody = true;
+            currentSelectedBody = selectedBody;
         }
-        XChangeVelocity = 100.0*(convertToPosX(X) - convertToPosX(oldX));
-        YChangeVelocity = 100.0*(convertToPosY(Y) - convertToPosY(oldY));
-        XMoveVelocity = convertToPosX(X) - convertToPosX(currentSelectedBody.getTransform().getTranslationX());
-        XMoveVelocity = convertToPosX(X) - convertToPosX(currentSelectedBody.getTransform().getTranslationX());
+        if (!MouseDown) {
+            hasSelectedBody = false;
+            currentSelectedBody = null;
+        }
+        if (hasSelectedBody) {
+            currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity+XChangeVelocity)/2, (YChangeVelocity+YMoveVelocity)/2));
+            XChangeVelocity = 8.0 * (convertToPosX(X) - convertToPosX(oldX));
+            YChangeVelocity = 8.0 * (convertToPosY(Y) - convertToPosY(oldY));
+            XMoveVelocity = 8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
+            YMoveVelocity = 8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
+        }
         System.out.println(XChangeVelocity + " " + YChangeVelocity);
         oldX = X;
         oldY = Y;
@@ -271,7 +278,7 @@ Body currentSelectedBody = null;
                 } else if (false && this.userData != null) {
                     g.drawString(((UserData) this.userData).getName(), -5, 2);
                 }
-                g.drawString(XChangeVelocity + " " + YChangeVelocity,0, 0);
+                g.drawString(XMoveVelocity + " " + YMoveVelocity, 0, 0);
                 g.setTransform(ot);
             }
         }
