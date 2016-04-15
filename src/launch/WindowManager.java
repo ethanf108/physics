@@ -75,7 +75,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public void ApplyForceThread() throws InterruptedException {
         Thread.sleep(50);
         Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
-        if (MouseDown && selectedBody != null) {
+        if (MouseDown && selectedBody != null && !hasSelectedBody) {
             hasSelectedBody = true;
             currentSelectedBody = selectedBody;
         }
@@ -84,13 +84,12 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
             currentSelectedBody = null;
         }
         if (hasSelectedBody) {
-            currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity+XChangeVelocity)/2, (YChangeVelocity+YMoveVelocity)/2));
+            currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity + XChangeVelocity) / 2, (YChangeVelocity + YMoveVelocity) / 2));
             XChangeVelocity = 8.0 * (convertToPosX(X) - convertToPosX(oldX));
             YChangeVelocity = 8.0 * (convertToPosY(Y) - convertToPosY(oldY));
             XMoveVelocity = 8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
             YMoveVelocity = 8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
         }
-        System.out.println(XChangeVelocity + " " + YChangeVelocity);
         oldX = X;
         oldY = Y;
     }
@@ -265,7 +264,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 g.setColor(Color.BLACK);
                 AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
                 g.transform(yFlip);
-                if (false && !NameShowing) {
+                if (!NameShowing) {
                     if (this.mass.getType().equals(MassType.NORMAL)) {
 
                         g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
@@ -275,10 +274,9 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                     if (!((UserData) getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
-                } else if (false && this.userData != null) {
+                } else {
                     g.drawString(((UserData) this.userData).getName(), -5, 2);
                 }
-                g.drawString(XMoveVelocity + " " + YMoveVelocity, 0, 0);
                 g.setTransform(ot);
             }
         }

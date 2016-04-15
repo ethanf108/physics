@@ -50,7 +50,7 @@ public class LayoutManager implements ActionListener {
     JPanel HoldingPanel = new JPanel();
     JPanel EnvChooserPanel = new JPanel();
     JPanel PresetChooserPanel = new JPanel();
-    JComboBox PresetChooser = new JComboBox(new String[]{"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Custom"});
+    JComboBox PresetChooser = new JComboBox(new String[]{"Mercury", "Venus", "Earth", "Moon", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Custom"});
     public static final String EnvName = "Environment Variables";
     public static final String ObjName = "Object Variables";
     public static final String SetName = "Application Settings";
