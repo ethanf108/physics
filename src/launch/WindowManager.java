@@ -59,6 +59,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
 
     public Body getBodyByPos(double x, double y) {
         for (Body b : this.world.getBodies()) {
+            if(this.world.getBodyCount()<1)return null;
             if (b.contains(new Vector2(x, y))) {
                 return b;
             }
@@ -72,41 +73,34 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static double currentAngle = 0.0;
     boolean hasSelectedBody = false;
     Body currentSelectedBody = null;
-    static Vector2 Point = null;
 
     public static double getAngle(Vector2 p) {
         double angle = Math.toDegrees(Math.atan2(p.y, p.x));
-
         if (angle < 0) {
             angle += 360;
         }
-
         return angle;
     }
 
     public void ApplyForceThread() throws InterruptedException {
         Thread.sleep(50);
         Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
-        if (MouseDown && selectedBody != null && !hasSelectedBody && Point == null) {
+        if (MouseDown && selectedBody != null && !hasSelectedBody) {
             hasSelectedBody = true;
             currentSelectedBody = selectedBody;
         }
         if (!MouseDown) {
             hasSelectedBody = false;
             currentSelectedBody = null;
-            Point = null;
         }
         if (hasSelectedBody) {
-
             currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity + XChangeVelocity) / 2, (YChangeVelocity + YMoveVelocity) / 2));
-            //currentSelectedBody.setAngularVelocity(-currentAngle);
-            Point = currentSelectedBody.getLocalPoint(new Vector2(convertToPosX(X), convertToPosY(Y)));
-
             XChangeVelocity = 8.0 * (convertToPosX(X) - convertToPosX(oldX));
             YChangeVelocity = 8.0 * (convertToPosY(Y) - convertToPosY(oldY));
             XMoveVelocity = 8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
             YMoveVelocity = 8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
-            currentAngle = getAngle(Point);
+        }else{
+            XMoveVelocity=YMoveVelocity=XChangeVelocity=YChangeVelocity=0;
         }
         oldX = X;
         oldY = Y;
@@ -168,7 +162,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         }
     }
 
-    void addRandOb(int x, int y) {
+    Body addRandOb(int x, int y) {
         GameObject ObjectYo = new GameObject();
         int tsides = Sides;
         double tsize = Size;
@@ -186,31 +180,41 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
         UserData.Generate(ObjectYo, tname, false);
         this.world.addBody(ObjectYo);
-
+        return ObjectYo;
     }
+    long ClickDelay = 0;
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-        for (Body b : this.world.getBodies()) {
-            if (b.contains(new Vector2((x - 400.0) / SCALE, convertToPosY(y)))) {
-                //this.world.removeBody(b);
-                return;
-            }
-        }
-        addRandOb(x, y);
 
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
         MouseDown = true;
+        if (getBodyByPos(convertToPosX(e.getX()), convertToPosY(e.getY())) == null) {
+            addRandOb(e.getX(), e.getY());
+            ClickDelay = 0;
+            return;
+        }
+        ClickDelay = System.currentTimeMillis();
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
         MouseDown = false;
+        int x = e.getX();
+        int y = e.getY();
+        if (System.currentTimeMillis() - ClickDelay <= 100) {
+            for (Body b : this.world.getBodies()) {
+                if (b.contains(new Vector2((x - 400.0) / SCALE, convertToPosY(y)))) {
+                    this.world.removeBody(b);
+                    return;
+                }
+            }
+            currentSelectedBody = addRandOb(x, y);
+            hasSelectedBody = true;
+        }
     }
 
     @Override
@@ -274,7 +278,6 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
             g.transform(lt);
             final double dectemp = Math.pow(10.0, VelocityDecimals);
             for (BodyFixture fixture : this.fixtures) {
-
                 Convex convex = fixture.getShape();
                 Graphics2DRenderer.render(g, convex, SCALE, color);
                 g.rotate(0 - transform.getRotation());
@@ -282,7 +285,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 g.setColor(Color.BLACK);
                 AffineTransform yFlip = AffineTransform.getScaleInstance(1, -1);
                 g.transform(yFlip);
-                if (false && !NameShowing) {
+                if (!NameShowing) {
                     if (this.mass.getType().equals(MassType.NORMAL)) {
 
                         g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
@@ -292,10 +295,10 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                     if (!((UserData) getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
                     }
-                } else //g.drawString(((UserData) this.userData).getName(), -5, 2);
-                if (Point != null) {
-                    g.drawString(Point.x + " " + Point.y, 0, 0);
+                } else {
+                    g.drawString(((UserData) this.userData).getName(), -5, 2);
                 }
+
                 g.setTransform(ot);
             }
         }
@@ -386,7 +389,9 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         this.last = time;
         double elapsedTime = diff / NANO_TO_BASE;
         if (!isPaused) {
-            this.world.update(elapsedTime / TimeSlow);
+            if (this.world.getBodyCount() != 0) {
+                this.world.update(elapsedTime / TimeSlow);
+            }
         }
     }
 
