@@ -48,6 +48,12 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static boolean isPaused = false;
     public static double Bounce = 0;
     public static final double NANO_TO_BASE = 1.0e9;
+    static volatile double XChangeVelocity = 0;
+    static volatile double YChangeVelocity = 0;
+    static volatile double XMoveVelocity = 0;
+    static volatile double YMoveVelocity = 0;
+    static volatile boolean hasSelectedBody = false;
+    static volatile Body currentSelectedBody = null;
 
     public double convertToPosX(double x) {
         return (x - 400.0) / SCALE;
@@ -66,13 +72,6 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         }
         return null;
     }
-    static double XChangeVelocity = 0;
-    static double YChangeVelocity = 0;
-    static double XMoveVelocity = 0;
-    static double YMoveVelocity = 0;
-    public static double currentAngle = 0.0;
-    boolean hasSelectedBody = false;
-    Body currentSelectedBody = null;
 
     public static double getAngle(Vector2 p) {
         double angle = Math.toDegrees(Math.atan2(p.y, p.x));
@@ -97,8 +96,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
             currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity + XChangeVelocity) / 2, (YChangeVelocity + YMoveVelocity) / 2));
             XChangeVelocity = 8.0 * (convertToPosX(X) - convertToPosX(oldX));
             YChangeVelocity = 8.0 * (convertToPosY(Y) - convertToPosY(oldY));
-            XMoveVelocity = 8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
-            YMoveVelocity = 8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
+            XMoveVelocity =   8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
+            YMoveVelocity =   8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
         }else{
             XMoveVelocity=YMoveVelocity=XChangeVelocity=YChangeVelocity=0;
         }
@@ -287,10 +286,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 g.transform(yFlip);
                 if (!NameShowing) {
                     if (this.mass.getType().equals(MassType.NORMAL)) {
-
                         g.drawString(Double.toString(Math.round(this.velocity.x * dectemp) / dectemp), -5, -7);
                         g.drawString(Double.toString(Math.round(this.velocity.y * dectemp) / dectemp), -5, 2);
-
                     }
                     if (!((UserData) getUserData()).isFix()) {
                         g.drawString(Double.toString(Math.round(Math.toDegrees(-this.angularVelocity) * dectemp) / dectemp), -5, this.mass.getType().equals(MassType.INFINITE) ? 2 : 11);
@@ -343,7 +340,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         this.last = System.nanoTime();
         this.canvas.setIgnoreRepaint(true);
         this.canvas.createBufferStrategy(2);
-        Thread thread = new Thread() {
+        Thread GameRenderThread = new Thread() {
             @Override
             public void run() {
                 while (!isStopped()) {
@@ -365,8 +362,8 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
                 }
             }
         };
-        thread.setDaemon(true);
-        thread.start();
+        GameRenderThread.setDaemon(true);
+        GameRenderThread.start();
         ApplyForceThread.setDaemon(true);
         ApplyForceThread.start();
     }

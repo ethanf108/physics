@@ -7,6 +7,7 @@ package launch;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -65,6 +66,7 @@ public class Popup extends JFrame {
         c.show(this.getContentPane(), "0");
         pack();
         setVisible(true);
+        Toolkit.getDefaultToolkit().beep();
 
     }
 
