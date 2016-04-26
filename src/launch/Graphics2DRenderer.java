@@ -4,7 +4,10 @@ package launch;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.util.ArrayList;
 
 import org.dyn4j.geometry.Capsule;
 import org.dyn4j.geometry.Circle;
@@ -48,7 +51,6 @@ public final class Graphics2DRenderer {
 	public static final void render(Graphics2D g, Polygon polygon, double scale, Color color) {
 		Vector2[] vertices = polygon.getVertices();
 		int l = vertices.length;
-		
 		// create the awt polygon
 		Path2D.Double p = new Path2D.Double();
 		p.moveTo(vertices[0].x * scale, vertices[0].y * scale);
@@ -56,7 +58,7 @@ public final class Graphics2DRenderer {
 			p.lineTo(vertices[i].x * scale, vertices[i].y * scale);
 		}
 		p.closePath();
-		
+                
 		// fill the shape
 		g.setColor(color);
 		g.fill(p);

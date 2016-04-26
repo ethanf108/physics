@@ -6,14 +6,20 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import javax.swing.BoxLayout;
+import javax.swing.JFrame;
 
 import javax.swing.JPanel;
 
@@ -27,10 +33,10 @@ import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
-public class WindowManager extends JPanel implements MouseListener, MouseMotionListener, KeyEventDispatcher {
+public class WindowManager extends JPanel implements MouseListener, MouseMotionListener, KeyEventDispatcher, MouseWheelListener {
 
     public static final byte VelocityDecimals = 2;
-    public final byte TimeSlow = 1;
+    public final double TimeSlow = 1.0;
     public static double SCALE = 45.0;
     public byte Sides = 3;
     public double Size = 1.0;
@@ -59,7 +65,9 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
 
     public Body getBodyByPos(double x, double y) {
         for (Body b : this.world.getBodies()) {
-            if(this.world.getBodyCount()<1)return null;
+            if (this.world.getBodyCount() < 1) {
+                return null;
+            }
             if (b.contains(new Vector2(x, y))) {
                 return b;
             }
@@ -73,7 +81,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public static double currentAngle = 0.0;
     boolean hasSelectedBody = false;
     Body currentSelectedBody = null;
-
+    byte buttonsDown = 0;
     public static double getAngle(Vector2 p) {
         double angle = Math.toDegrees(Math.atan2(p.y, p.x));
         if (angle < 0) {
@@ -83,9 +91,11 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     }
 
     public void ApplyForceThread() throws InterruptedException {
+        
+        LayoutManager.SysPan.repaint();
         Thread.sleep(50);
         Body selectedBody = getBodyByPos(convertToPosX(X), convertToPosY(Y));
-        if (MouseDown && selectedBody != null && !hasSelectedBody) {
+        if (MouseDown && selectedBody != null && !hasSelectedBody & !((UserData) selectedBody.getUserData()).isFix() && buttonsDown==1) {
             hasSelectedBody = true;
             currentSelectedBody = selectedBody;
         }
@@ -93,14 +103,14 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
             hasSelectedBody = false;
             currentSelectedBody = null;
         }
-        if (hasSelectedBody) {
+        if (hasSelectedBody&&buttonsDown==1) {
             currentSelectedBody.setLinearVelocity(new Vector2((XMoveVelocity + XChangeVelocity) / 2, (YChangeVelocity + YMoveVelocity) / 2));
             XChangeVelocity = 8.0 * (convertToPosX(X) - convertToPosX(oldX));
             YChangeVelocity = 8.0 * (convertToPosY(Y) - convertToPosY(oldY));
             XMoveVelocity = 8.0 * (convertToPosX(X) - currentSelectedBody.getTransform().getTranslationX());
             YMoveVelocity = 8.0 * (convertToPosY(Y) - currentSelectedBody.getTransform().getTranslationY());
-        }else{
-            XMoveVelocity=YMoveVelocity=XChangeVelocity=YChangeVelocity=0;
+        } else {
+            XMoveVelocity = YMoveVelocity = XChangeVelocity = YChangeVelocity = 0;
         }
         oldX = X;
         oldY = Y;
@@ -122,7 +132,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         UserData.Generate(FloorO, "Floor", true);
         FloorO.addFixture(new BodyFixture(Floor));
         FloorO.setMass(MassType.INFINITE);
-        FloorO.translate(0, -5.25);
+        FloorO.translate(0, -5);
         this.world.addBody(FloorO);
         Rectangle Ceil = new Rectangle(20.0, 1.0);
         GameObject CeilO = new GameObject();
@@ -178,43 +188,40 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         ObjectYo.setMass(tisstatic ? MassType.INFINITE : MassType.NORMAL);
         ObjectYo.translate(convertToPosX(x), -((y - 350.0) / SCALE));
         ObjectYo.setAngularVelocity(Math.toRadians(tangvel * 10.0));
-        UserData.Generate(ObjectYo, tname, false);
+        UserData.Generate(ObjectYo, tname, tisstatic);
         this.world.addBody(ObjectYo);
         return ObjectYo;
     }
-    long ClickDelay = 0;
-
     @Override
     public void mouseClicked(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        MouseDown = true;
-        if (getBodyByPos(convertToPosX(e.getX()), convertToPosY(e.getY())) == null) {
-            addRandOb(e.getX(), e.getY());
-            ClickDelay = 0;
-            return;
-        }
-        ClickDelay = System.currentTimeMillis();
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        MouseDown = false;
         int x = e.getX();
         int y = e.getY();
-        if (System.currentTimeMillis() - ClickDelay <= 100) {
+        buttonsDown = (byte)((e.getButton()==1?1:0)*1 + (e.getButton()==2?1:0)*2 + (e.getButton()==3?1:0)*4);
+        if (e.getButton() == 3) {
             for (Body b : this.world.getBodies()) {
                 if (b.contains(new Vector2((x - 400.0) / SCALE, convertToPosY(y)))) {
                     this.world.removeBody(b);
                     return;
                 }
             }
-            currentSelectedBody = addRandOb(x, y);
+
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        MouseDown = true;
+        buttonsDown = (byte)((e.getButton()==1?1:0)*1 + (e.getButton()==2?1:0)*2 + (e.getButton()==3?1:0)*4);
+        if (getBodyByPos(convertToPosX(e.getX()), convertToPosY(e.getY())) == null && e.getButton() == 1) {
+            currentSelectedBody = addRandOb(e.getX(), e.getY());
             hasSelectedBody = true;
         }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        MouseDown = false;
+        buttonsDown = (byte)((e.getButton()==1?1:0)*1 + (e.getButton()==2?1:0)*2 + (e.getButton()==3?1:0)*4);
     }
 
     @Override
@@ -250,6 +257,11 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
     public void mouseMoved(MouseEvent e) {
         X = e.getX();
         Y = e.getY();
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        SCALE -= e.getUnitsToScroll();
     }
 
     public static class GameObject extends Body {
@@ -312,6 +324,7 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         super();
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(this);
+        this.addMouseWheelListener(this);
         customLayoutManager = new LayoutManager(this);
         JPanel before = new JPanel();
         before.setLayout(new BoxLayout(before, BoxLayout.Y_AXIS));
@@ -390,7 +403,13 @@ public class WindowManager extends JPanel implements MouseListener, MouseMotionL
         double elapsedTime = diff / NANO_TO_BASE;
         if (!isPaused) {
             if (this.world.getBodyCount() != 0) {
+                try{
                 this.world.update(elapsedTime / TimeSlow);
+                }catch(ConcurrentModificationException e){
+                    System.out.println("Concurrent");
+                }catch(IndexOutOfBoundsException e){
+                    System.out.println("OOB");
+                }
             }
         }
     }

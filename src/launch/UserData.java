@@ -16,17 +16,15 @@ import org.dyn4j.geometry.MassType;
 public class UserData {
 
     private String Name;
-    private boolean Static;
     private boolean isFix;
 
-    public UserData(String Name, boolean Static, boolean f) {
+    public UserData(String Name, boolean f) {
         this.Name = Name;
-        this.Static = Static;
         this.isFix = f;
     }
 
     public static void Generate(Body b, String name, boolean isFix) {
-        b.setUserData(new UserData(name, b.getMass().equals(MassType.INFINITE), isFix));
+        b.setUserData(new UserData(name, isFix));
     }
 
     public boolean isFix() {
@@ -43,14 +41,6 @@ public class UserData {
 
     public void setName(String Name) {
         this.Name = Name;
-    }
-
-    public boolean isStatic() {
-        return Static;
-    }
-
-    public void setStatic(boolean Static) {
-        this.Static = Static;
     }
 
 }

@@ -5,16 +5,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.text.DecimalFormat;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -24,12 +21,8 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
-import static launch.MainWindow.PWID;
 import static launch.WindowManager.isNextStaticObject;
 import static launch.WindowManager.isPaused;
-import org.dyn4j.dynamics.BodyFixture;
-import org.dyn4j.geometry.MassType;
-import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Vector2;
 
 public class LayoutManager implements ActionListener {
@@ -50,15 +43,16 @@ public class LayoutManager implements ActionListener {
     JPanel HoldingPanel = new JPanel();
     JPanel EnvChooserPanel = new JPanel();
     JPanel PresetChooserPanel = new JPanel();
-    JComboBox PresetChooser = new JComboBox(new String[]{"Mercury", "Venus", "Earth", "Moon", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Custom"});
+    public static JComboBox<String> PresetChooser = new JComboBox<>(new String[]{"Mercury", "Venus", "Earth", "Moon", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Custom"});
     public static final String EnvName = "Environment Variables";
     public static final String ObjName = "Object Variables";
     public static final String SetName = "Application Settings";
     public static final String BasicEnv = "Floor Only";
     public static final String BoxEnv = "Boxed";
-    public static JComboBox SettingsChooser = new JComboBox(new String[]{EnvName, ObjName, SetName});
-    public static JComboBox EnvChooser = new JComboBox(new String[]{BasicEnv, BoxEnv});
+    public static JComboBox<String> SettingsChooser = new JComboBox<>(new String[]{EnvName, ObjName, SetName});
+    public static JComboBox<String> EnvChooser = new JComboBox<>(new String[]{BasicEnv, BoxEnv});
     private boolean PresetCustom = false;
+    public static SysPanel SysPan = null;
 
     public double getPresetgrav(String s) {
         switch (s) {
@@ -86,6 +80,7 @@ public class LayoutManager implements ActionListener {
                 return -source.world.getGravity().y;
         }
     }
+
     public double getAirRes(String s) {
         switch (s) {
             case "Mercury":
@@ -136,7 +131,7 @@ public class LayoutManager implements ActionListener {
                 pause.setText("Pause");
             }
         } else if (e.getSource().equals(showNames)) {
-            source.NameShowing = showNames.isSelected();
+            WindowManager.NameShowing = showNames.isSelected();
         }
     }
 
@@ -149,13 +144,32 @@ public class LayoutManager implements ActionListener {
         CardLayout c = ((CardLayout) AllPanel.getLayout());
         c.show(AllPanel, ID);
     }
+    public class SysPanel extends JPanel{
+        public SysPanel(){
+            super();
+        }
+        public void paint(Graphics g2){
+            Graphics2D g = (Graphics2D)g2;
+            g.setColor(RandColor);
+            g.fillRect(0,0,10000,10);
+            g.setColor(Color.BLACK);
+            String StatusBarText = "Memory: ";
+            StatusBarText+=Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+            StatusBarText+="/";
+            StatusBarText+=Runtime.getRuntime().totalMemory();
+            StatusBarText+="    Avaliable Cores: ";
+            StatusBarText+=Runtime.getRuntime().availableProcessors();
+            g.drawString(StatusBarText, 0, 10);
+        }
+    }
     public JPanel layoutSettings() {
-
         source.setLayout(new BoxLayout(source, BoxLayout.Y_AXIS));
+        SysPan = new SysPanel();
+        HoldingPanel.setLayout(new BoxLayout(HoldingPanel, BoxLayout.Y_AXIS));
+        HoldingPanel.add(SysPan);
         EnvChooserPanel.setBackground(RandColor);
         EnvChooserPanel.setLayout(new BoxLayout(EnvChooserPanel, BoxLayout.X_AXIS));
         EnvPanel.setLayout(new BoxLayout(EnvPanel, BoxLayout.Y_AXIS));
-        HoldingPanel.setLayout(new BoxLayout(HoldingPanel, BoxLayout.Y_AXIS));
         AllPanel.setLayout(new CardLayout());
         ObjPanel.setLayout(new BoxLayout(ObjPanel, BoxLayout.Y_AXIS));
         EnvPanel.add(createLabelSliderPanel(9.8, new JSlider(0, 1000, 98), "Gravity: ", 1, 3,
@@ -182,9 +196,9 @@ public class LayoutManager implements ActionListener {
                 (JSlider slider) -> {
                     source.AirRes = slider.getValue() / 100.0;
                 }));
-        ObjPanel.add(createLabelSliderPanel(0, new JSlider(0, 100, 0), "Bounciness: ", 2, 0,
+        ObjPanel.add(createLabelSliderPanel(0, new JSlider(0, 200, 0), "Bounciness: ", 2, 0,
                 (JSlider slider) -> {
-                    source.Bounce = slider.getValue() / 100.0;
+                    WindowManager.Bounce = slider.getValue() / 100.0;
                 }));
         namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.X_AXIS));
         namePanel.setBackground(RandColor);
@@ -294,7 +308,7 @@ public class LayoutManager implements ActionListener {
                 if (PresetChooser.getSelectedItem().equals("Custom")) {
                     return;
                 }
-                int tmpVal = (int) (getAirRes((String) PresetChooser.getSelectedItem())*10);
+                int tmpVal = (int) (getAirRes((String) PresetChooser.getSelectedItem()) * 10);
                 s.setValue(tmpVal);
                 if (div > 0) {
 
@@ -321,7 +335,7 @@ public class LayoutManager implements ActionListener {
         l.setFont(CurrentFont);
 
         s.addChangeListener((ChangeEvent e) -> {
-            if (PresetCustom && (t.equals("Gravity: ")||t.equals("Air Resistance: "))) {
+            if (PresetCustom && (t.equals("Gravity: ") || t.equals("Air Resistance: "))) {
                 PresetChooser.setSelectedItem("Custom");
             }
             PresetCustom = true;

@@ -1,11 +1,9 @@
 package launch;
 
-import java.awt.CardLayout;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ConcurrentModificationException;
 import java.util.prefs.Preferences;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
@@ -24,6 +22,7 @@ public class MainWindow extends JFrame {
 
     public static void handleExceptionPopup(Throwable e) {
         System.out.print("ERROR");
+        e.printStackTrace();
         MAIN.dispose();
         MAIN = null;
         settingsWindow = null;
@@ -46,6 +45,7 @@ public class MainWindow extends JFrame {
             }
             Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
                 public void uncaughtException(Thread th, Throwable e) {
+                    if(e instanceof ConcurrentModificationException||e instanceof IndexOutOfBoundsException)return;
                     handleExceptionPopup(e);
                 }
             };
