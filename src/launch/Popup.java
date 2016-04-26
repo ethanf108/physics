@@ -19,7 +19,7 @@ import static launch.LayoutManager.AllPanel;
 
 /**
  *
- * @author Ethan
+ * @author o
  */
 public class Popup extends JFrame {
 
