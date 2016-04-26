@@ -144,24 +144,30 @@ public class LayoutManager implements ActionListener {
         CardLayout c = ((CardLayout) AllPanel.getLayout());
         c.show(AllPanel, ID);
     }
-    public class SysPanel extends JPanel{
-        public SysPanel(){
+
+    public class SysPanel extends JPanel {
+        public SysPanel() {
             super();
         }
-        public void paint(Graphics g2){
-            Graphics2D g = (Graphics2D)g2;
+        public void paint(Graphics g2) {
+            Graphics2D g = (Graphics2D) g2;
             g.setColor(RandColor);
-            g.fillRect(0,0,10000,10);
+            g.fillRect(0, 0, 10000, 10);
             g.setColor(Color.BLACK);
             String StatusBarText = "Memory: ";
-            StatusBarText+=Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
-            StatusBarText+="/";
-            StatusBarText+=Runtime.getRuntime().totalMemory();
-            StatusBarText+="    Avaliable Cores: ";
-            StatusBarText+=Runtime.getRuntime().availableProcessors();
+            StatusBarText += (
+                    Runtime.getRuntime().maxMemory()
+                    - Runtime.getRuntime().totalMemory()
+                    + Runtime.getRuntime().freeMemory()
+                    ) / 1024 / 1024;
+            StatusBarText += "MB    Avaliable Cores: ";
+            StatusBarText += Runtime.getRuntime().availableProcessors();
+            StatusBarText += "    Number Of Bodies: ";
+            StatusBarText += source.world.getBodyCount();
             g.drawString(StatusBarText, 0, 10);
         }
     }
+
     public JPanel layoutSettings() {
         source.setLayout(new BoxLayout(source, BoxLayout.Y_AXIS));
         SysPan = new SysPanel();
@@ -212,7 +218,6 @@ public class LayoutManager implements ActionListener {
         nameField.setMaximumSize(new Dimension(nameField.getMaximumSize().width, nameField.getFont().getSize() * 5 + 3));
         namePanel.add(nameField);
         ObjPanel.add(namePanel);
-        //buttons
         close.setBackground(RandColor);
         pause.setBackground(RandColor);
         deleteAll.setBackground(RandColor);
@@ -266,7 +271,6 @@ public class LayoutManager implements ActionListener {
     public JPanel createLabelSliderPanel(double dv, JSlider s, String t, int div, int d, SliderImp r) {
         JPanel panel = new JPanel();
         JLabel l = new JLabel();
-
         panel.setBackground(RandColor);
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         s.setBackground(RandColor);
